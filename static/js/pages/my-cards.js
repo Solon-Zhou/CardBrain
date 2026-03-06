@@ -13,11 +13,11 @@ const BANK_COLORS = {
   "台灣企銀": "#004B87",
 };
 
-let _allCards = null;
+let _myCardsAllCards = null;
 
 async function MyCardsPage() {
   const cards = await API.getCards();
-  _allCards = cards;
+  _myCardsAllCards = cards;
   const myIds = Store.getMyCards();
   const myCards = cards.filter((c) => myIds.includes(c.id));
 
@@ -72,7 +72,7 @@ MyCardsPage.init = () => {
 
   function refreshThumbs() {
     const myIds = Store.getMyCards();
-    const myCards = _allCards.filter((c) => myIds.includes(c.id));
+    const myCards = _myCardsAllCards.filter((c) => myIds.includes(c.id));
     const html = myCards
       .map((c) => {
         const color = BANK_COLORS[c.bank_name] || "#555";
@@ -117,7 +117,7 @@ MyCardsPage.init = () => {
   function renderList(query) {
     const myIds = Store.getMyCards();
     const q = query.toLowerCase();
-    const filtered = _allCards.filter(
+    const filtered = _myCardsAllCards.filter(
       (c) =>
         !q ||
         c.bank_name.toLowerCase().includes(q) ||
