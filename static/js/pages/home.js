@@ -80,14 +80,6 @@ async function HomePage() {
     .join("");
 
   return `
-    <!-- 附近商家地圖（預設隱藏，定位成功後顯示） -->
-    <div class="nearby-section" id="nearbySection" style="display:none">
-      <div class="nearby-title" id="nearbyTitle">📍 定位中...</div>
-      <div class="nearby-map-wrap">
-        <div id="nearbyMap"></div>
-      </div>
-    </div>
-
     <!-- 我的卡組合 -->
     <div class="mycard-section">
       <div class="mycard-title">【我的卡組合】</div>
@@ -95,6 +87,19 @@ async function HomePage() {
       <div class="mycard-thumbs" id="cardThumbs">
         ${thumbsHtml}
         <div class="card-thumb-add" id="btnAddCard"><span>+</span></div>
+      </div>
+    </div>
+
+    <!-- 附近商家地圖（永遠顯示，未定位時顯示授權提示） -->
+    <div class="nearby-section" id="nearbySection">
+      <div class="nearby-title" id="nearbyTitle">📍 附近商家地圖</div>
+      <div class="nearby-map-wrap">
+        <div id="nearbyMap"></div>
+        <div class="nearby-permission" id="nearbyPermission">
+          <div class="nearby-permission-icon">📍</div>
+          <div class="nearby-permission-text">開啟定位以探索附近商家的最佳刷卡推薦</div>
+          <button class="nearby-permission-btn" id="btnGrantLocation">開啟定位</button>
+        </div>
       </div>
     </div>
 
@@ -296,6 +301,9 @@ HomePage.init = () => {
 
   // ── 附近商家地圖（Geofencing + Leaflet）──
   const nearbySection = document.getElementById("nearbySection");
+  const permissionEl = document.getElementById("nearbyPermission");
+  const mapEl = document.getElementById("nearbyMap");
+  const titleEl = document.getElementById("nearbyTitle");
   let _nearbyMap = null;
   let _mapLayerGroup = null;
 
@@ -312,12 +320,21 @@ HomePage.init = () => {
     return MERCHANT_EMOJIS[categoryName] || "📍";
   }
 
+  function _showPermissionPrompt() {
+    permissionEl.style.display = "";
+    mapEl.style.display = "none";
+    titleEl.textContent = "📍 附近商家地圖";
+  }
+
+  function _hidePermissionPrompt() {
+    permissionEl.style.display = "none";
+    mapEl.style.display = "";
+  }
+
   function renderNearby(data) {
     const { userLat, userLng, nearby } = data;
 
-    // 只要有座標就顯示地圖
-    nearbySection.style.display = "";
-    const titleEl = document.getElementById("nearbyTitle");
+    _hidePermissionPrompt();
     titleEl.textContent = nearby.length
       ? `📍 偵測到 ${nearby.length} 間附近商家`
       : "📍 你的位置（附近暫無合作商家）";
@@ -386,7 +403,6 @@ HomePage.init = () => {
       _nearbyMap.setView([userLat, userLng], 16);
     }
 
-    // 修正地圖在隱藏容器中的大小問題
     setTimeout(() => _nearbyMap.invalidateSize(), 100);
 
     // 推播通知（只通知第一個）
@@ -397,8 +413,41 @@ HomePage.init = () => {
     }
   }
 
-  // 啟動定位
-  if (typeof Geo !== "undefined") {
-    Geo.startWatching(renderNearby);
+  function _startGeo() {
+    if (typeof Geo !== "undefined") {
+      Geo.startWatching(renderNearby);
+    }
   }
+
+  // 檢查定位權限狀態，決定顯示地圖或授權提示
+  if (!("geolocation" in navigator)) {
+    // 瀏覽器不支援定位
+    permissionEl.querySelector(".nearby-permission-text").textContent = "您的瀏覽器不支援定位功能";
+    permissionEl.querySelector(".nearby-permission-btn").style.display = "none";
+    _showPermissionPrompt();
+  } else if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: "geolocation" }).then((result) => {
+      if (result.state === "granted") {
+        _hidePermissionPrompt();
+        _startGeo();
+      } else {
+        // prompt 或 denied — 先顯示授權提示
+        _showPermissionPrompt();
+        if (result.state === "denied") {
+          permissionEl.querySelector(".nearby-permission-text").textContent = "定位權限已被封鎖，請至瀏覽器設定中開啟";
+          permissionEl.querySelector(".nearby-permission-btn").textContent = "重新整理";
+          document.getElementById("btnGrantLocation").addEventListener("click", () => location.reload());
+        }
+      }
+    });
+  } else {
+    // 無法查詢權限（Safari 等），直接顯示授權按鈕
+    _showPermissionPrompt();
+  }
+
+  // 「開啟定位」按鈕
+  document.getElementById("btnGrantLocation").addEventListener("click", () => {
+    titleEl.textContent = "📍 定位中...";
+    _startGeo();
+  });
 };

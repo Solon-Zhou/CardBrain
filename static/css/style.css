@@ -574,6 +574,7 @@ body {
   margin-bottom: 10px;
 }
 .nearby-map-wrap {
+  position: relative;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -582,6 +583,41 @@ body {
 #nearbyMap {
   height: 280px;
   width: 100%;
+}
+/* 定位授權提示（覆蓋在地圖容器上） */
+.nearby-permission {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 280px;
+  gap: 12px;
+  background: linear-gradient(135deg, var(--primary-bg) 0%, #E8E4FF 100%);
+}
+.nearby-permission-icon {
+  font-size: 48px;
+}
+.nearby-permission-text {
+  font-size: 14px;
+  color: var(--text-light);
+  text-align: center;
+  padding: 0 24px;
+  line-height: 1.5;
+}
+.nearby-permission-btn {
+  margin-top: 4px;
+  padding: 10px 28px;
+  border: none;
+  border-radius: 22px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.nearby-permission-btn:active {
+  opacity: 0.8;
 }
 /* Emoji 標記 */
 .nearby-emoji-marker {
