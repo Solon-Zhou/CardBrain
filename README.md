@@ -16,7 +16,7 @@
 - **智慧推薦** — 區分「我有的卡」vs「其他推薦」，有卡優先顯示
 - **回饋計算機** — 輸入消費金額，即時算出每張卡的回饋金額（含月上限警示）
 - **Fallback 機制** — 無回饋規則的商家自動回退到「國內一般消費」分類
-- **Geofencing 附近商家** — 瀏覽器定位偵測附近 500m 商家，自動推薦最佳刷卡，推播通知
+- **Geofencing 互動地圖** — Leaflet + OpenStreetMap 互動地圖，偵測附近 500m 商家以 emoji 標記顯示，點擊 popup 查看最佳刷卡推薦，推播通知
 
 ---
 
@@ -117,7 +117,7 @@ docker run -p 8000:8000 cardbrain
 |----|------|
 | 後端 | Python / FastAPI / SQLite |
 | 前端 | 純 HTML / CSS / JS（無框架）、SPA hash router |
-| Geofencing | Overpass API (OSM) + Geolocation API + Notification API |
+| Geofencing | Overpass API (OSM) + Geolocation API + Notification API + Leaflet 互動地圖 |
 | PWA | manifest.json + Service Worker (network-first) |
 | 部署 | Docker → Zeabur |
 
@@ -134,8 +134,9 @@ docker run -p 8000:8000 cardbrain
       → 後端呼叫 Overpass API（查附近 500m POI）
       → merchant_aliases 對照表匹配 DB 商家
       → recommend_by_merchant() 取得最佳卡片
-      → 回傳附近商家 + 推薦卡片
-  → 首頁顯示「偵測到附近商家」區塊
+      → 回傳附近商家 + 推薦卡片（含 lat/lng 座標）
+  → Leaflet 互動地圖：使用者藍色圓點 + 商家 emoji 標記
+  → 點擊標記彈出 popup（商家名 + 最佳卡 + 回饋率 + 連結）
   → Notification API 推播通知
 ```
 
@@ -143,11 +144,15 @@ docker run -p 8000:8000 cardbrain
 
 ```json
 {
+  "user_lat": 25.033,
+  "user_lng": 121.565,
   "nearby": [
     {
       "merchant_name": "星巴克",
       "category_name": "咖啡店",
       "distance_m": 120,
+      "lat": 25.034,
+      "lng": 121.566,
       "top_card": {
         "bank_name": "國泰世華",
         "card_name": "CUBE 卡",

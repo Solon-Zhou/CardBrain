@@ -562,7 +562,7 @@ body {
   font-weight: 500;
 }
 
-/* ── Nearby Section ──────────────────────── */
+/* ── Nearby Map Section ──────────────────── */
 .nearby-section {
   margin-bottom: 20px;
   animation: fadeIn 0.3s ease-out;
@@ -573,57 +573,63 @@ body {
   color: var(--primary);
   margin-bottom: 10px;
 }
-.nearby-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.nearby-map-wrap {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  background: var(--card-bg);
 }
-.nearby-card {
+#nearbyMap {
+  height: 280px;
+  width: 100%;
+}
+/* Emoji 標記 */
+.nearby-emoji-marker {
+  background: none !important;
+  border: none !important;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(135deg, #F0EDFF 0%, #E8E4FF 100%);
-  border: 2px solid var(--primary-light);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  justify-content: center;
 }
-.nearby-card:active {
-  transform: scale(0.98);
-  box-shadow: 0 2px 12px rgba(108, 92, 231, 0.2);
+.nearby-emoji-marker span {
+  font-size: 28px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
 }
-.nearby-card-left {
-  flex: 1;
-  min-width: 0;
+/* Popup 自訂樣式 */
+.nearby-popup {
+  text-align: center;
+  min-width: 140px;
 }
-.nearby-merchant {
+.nearby-popup-name {
   font-size: 15px;
   font-weight: 700;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-bottom: 2px;
 }
-.nearby-cat {
+.nearby-popup-cat {
   font-size: 12px;
   color: var(--text-light);
-  margin-top: 2px;
 }
-.nearby-card-right {
-  text-align: right;
-  flex-shrink: 0;
-  margin-left: 12px;
-}
-.nearby-rate {
+.nearby-popup-rate {
   font-size: 18px;
   font-weight: 800;
   color: var(--primary);
+  margin: 4px 0 2px;
 }
-.nearby-card-name {
+.nearby-popup-card {
   font-size: 11px;
   color: var(--text-light);
-  margin-top: 2px;
+}
+.nearby-popup-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+.nearby-popup-link:active {
+  opacity: 0.7;
 }
 
 /* ── Loading Spinner ──────────────────────── */

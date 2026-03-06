@@ -28,7 +28,11 @@ const Geo = (() => {
       const res = await fetch(`/api/nearby?${params}`);
       if (!res.ok) return;
       const data = await res.json();
-      callback(data.nearby || []);
+      callback({
+        userLat: data.user_lat ?? lat,
+        userLng: data.user_lng ?? lng,
+        nearby: data.nearby || [],
+      });
     } catch {
       // 靜默降級
     }

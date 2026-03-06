@@ -80,10 +80,12 @@ async function HomePage() {
     .join("");
 
   return `
-    <!-- 附近商家（預設隱藏，定位成功後顯示） -->
+    <!-- 附近商家地圖（預設隱藏，定位成功後顯示） -->
     <div class="nearby-section" id="nearbySection" style="display:none">
-      <div class="nearby-title">📍 偵測到附近商家</div>
-      <div class="nearby-list" id="nearbyList"></div>
+      <div class="nearby-title">📍 附近商家地圖</div>
+      <div class="nearby-map-wrap">
+        <div id="nearbyMap"></div>
+      </div>
     </div>
 
     <!-- 我的卡組合 -->
@@ -292,44 +294,100 @@ HomePage.init = () => {
     });
   });
 
-  // ── 附近商家（Geofencing）──
+  // ── 附近商家地圖（Geofencing + Leaflet）──
   const nearbySection = document.getElementById("nearbySection");
-  const nearbyList = document.getElementById("nearbyList");
+  let _nearbyMap = null;
+  let _mapLayerGroup = null;
 
-  function renderNearby(items) {
-    if (!items.length) {
+  const MERCHANT_EMOJIS = {
+    "咖啡店": "☕", "超商": "🏪", "超市": "🛒",
+    "量販店": "🏬", "速食": "🍔", "外送平台": "🛵",
+    "餐廳": "🍽️", "早餐店": "🥐", "百貨公司": "🛍️",
+    "加油": "⛽", "大眾運輸": "🚇", "高鐵": "🚄",
+    "網購": "📦", "影音串流": "🎬", "訂房網站": "🏨",
+    "藥妝": "💊", "寵物用品": "🐾",
+  };
+
+  function _getEmoji(categoryName) {
+    return MERCHANT_EMOJIS[categoryName] || "📍";
+  }
+
+  function renderNearby(data) {
+    const { userLat, userLng, nearby } = data;
+
+    if (!nearby.length) {
       nearbySection.style.display = "none";
       return;
     }
     nearbySection.style.display = "";
-    nearbyList.innerHTML = items.map((item) => {
+
+    // 初始化或重置地圖
+    if (!_nearbyMap) {
+      _nearbyMap = L.map("nearbyMap", {
+        zoomControl: false,
+        attributionControl: false,
+      }).setView([userLat, userLng], 16);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      }).addTo(_nearbyMap);
+      L.control.attribution({ prefix: false, position: "bottomright" })
+        .addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>')
+        .addTo(_nearbyMap);
+      _mapLayerGroup = L.layerGroup().addTo(_nearbyMap);
+    } else {
+      _mapLayerGroup.clearLayers();
+    }
+
+    // 使用者位置 — 藍色圓形
+    const userMarker = L.circleMarker([userLat, userLng], {
+      radius: 10,
+      fillColor: "#4A90D9",
+      fillOpacity: 0.9,
+      color: "#fff",
+      weight: 3,
+    }).bindPopup('<div class="nearby-popup"><b>你在這裡</b></div>');
+    _mapLayerGroup.addLayer(userMarker);
+
+    const bounds = L.latLngBounds([[userLat, userLng]]);
+
+    // 商家標記
+    nearby.forEach((item) => {
+      if (!item.lat || !item.lng) return;
+      const emoji = _getEmoji(item.category_name);
+      const icon = L.divIcon({
+        className: "nearby-emoji-marker",
+        html: `<span>${emoji}</span>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+      });
+
       const card = item.top_card;
       const rateUnit = card.reward_type === "miles" ? " 元/哩" :
         card.reward_type === "points" ? "% 點" : "% 回饋";
-      return `<div class="nearby-card" data-merchant="${item.merchant_name}">
-        <div class="nearby-card-left">
-          <div class="nearby-merchant">${item.merchant_name}</div>
-          <div class="nearby-cat">${item.category_name} · ${item.distance_m}m</div>
-        </div>
-        <div class="nearby-card-right">
-          <div class="nearby-rate">${card.reward_rate}${rateUnit}</div>
-          <div class="nearby-card-name">${card.bank_name} ${card.card_name}</div>
-        </div>
+      const popupHtml = `<div class="nearby-popup">
+        <div class="nearby-popup-name">${item.merchant_name}</div>
+        <div class="nearby-popup-cat">${item.category_name} · ${item.distance_m}m</div>
+        <div class="nearby-popup-rate">${card.reward_rate}${rateUnit}</div>
+        <div class="nearby-popup-card">${card.bank_name} ${card.card_name}</div>
+        <a class="nearby-popup-link" href="#/result?type=merchant&q=${encodeURIComponent(item.merchant_name)}">查看推薦 →</a>
       </div>`;
-    }).join("");
 
-    // 綁定點擊
-    nearbyList.querySelectorAll(".nearby-card").forEach((el) => {
-      el.addEventListener("click", () => {
-        const q = el.dataset.merchant;
-        location.hash = `#/result?type=merchant&q=${encodeURIComponent(q)}`;
-      });
+      const marker = L.marker([item.lat, item.lng], { icon })
+        .bindPopup(popupHtml);
+      _mapLayerGroup.addLayer(marker);
+      bounds.extend([item.lat, item.lng]);
     });
+
+    // 自動 fit bounds
+    _nearbyMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
+
+    // 修正地圖在隱藏容器中的大小問題
+    setTimeout(() => _nearbyMap.invalidateSize(), 100);
 
     // 推播通知（只通知第一個）
     if (typeof Notify !== "undefined") {
       Notify.requestPermission().then(() => {
-        Notify.notifyNearby(items[0]);
+        Notify.notifyNearby(nearby[0]);
       });
     }
   }

@@ -110,7 +110,7 @@ def api_nearby(
     if cache_key in _nearby_cache:
         cached_time, cached_data = _nearby_cache[cache_key]
         if now - cached_time < _NEARBY_TTL:
-            return _filter_nearby(cached_data, card_ids)
+            return _filter_nearby(cached_data, card_ids, actual_lat, actual_lng)
 
     # 呼叫 Overpass API
     pois = _query_overpass(actual_lat, actual_lng)
@@ -143,6 +143,8 @@ def api_nearby(
             "merchant_name": merchant_name,
             "category_name": top.get("category_name", ""),
             "distance_m": round(dist),
+            "lat": poi_lat,
+            "lng": poi_lng,
             "top_card": {
                 "bank_name": top["bank_name"],
                 "card_name": top["card_name"],
@@ -159,10 +161,10 @@ def api_nearby(
     # 寫入 cache
     _nearby_cache[cache_key] = (now, matched)
 
-    return _filter_nearby(matched, card_ids)
+    return _filter_nearby(matched, card_ids, actual_lat, actual_lng)
 
 
-def _filter_nearby(matched: list[dict], card_ids: str) -> dict:
+def _filter_nearby(matched: list[dict], card_ids: str, user_lat: float, user_lng: float) -> dict:
     """根據使用者卡片過濾 top_card，回傳精簡結果。"""
     ids = _parse_ids(card_ids)
     result = []
@@ -184,9 +186,11 @@ def _filter_nearby(matched: list[dict], card_ids: str) -> dict:
             "merchant_name": item["merchant_name"],
             "category_name": item["category_name"],
             "distance_m": item["distance_m"],
+            "lat": item["lat"],
+            "lng": item["lng"],
             "top_card": top,
         })
-    return {"nearby": result}
+    return {"user_lat": user_lat, "user_lng": user_lng, "nearby": result}
 
 
 def _query_overpass(lat: float, lng: float) -> list[dict]:
