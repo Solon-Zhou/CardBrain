@@ -80,6 +80,12 @@ async function HomePage() {
     .join("");
 
   return `
+    <!-- 附近商家（預設隱藏，定位成功後顯示） -->
+    <div class="nearby-section" id="nearbySection" style="display:none">
+      <div class="nearby-title">📍 偵測到附近商家</div>
+      <div class="nearby-list" id="nearbyList"></div>
+    </div>
+
     <!-- 我的卡組合 -->
     <div class="mycard-section">
       <div class="mycard-title">【我的卡組合】</div>
@@ -285,4 +291,51 @@ HomePage.init = () => {
       location.hash = `#/result?type=category&category_id=${subcatId}&name=${encodeURIComponent(name)}`;
     });
   });
+
+  // ── 附近商家（Geofencing）──
+  const nearbySection = document.getElementById("nearbySection");
+  const nearbyList = document.getElementById("nearbyList");
+
+  function renderNearby(items) {
+    if (!items.length) {
+      nearbySection.style.display = "none";
+      return;
+    }
+    nearbySection.style.display = "";
+    nearbyList.innerHTML = items.map((item) => {
+      const card = item.top_card;
+      const rateUnit = card.reward_type === "miles" ? " 元/哩" :
+        card.reward_type === "points" ? "% 點" : "% 回饋";
+      return `<div class="nearby-card" data-merchant="${item.merchant_name}">
+        <div class="nearby-card-left">
+          <div class="nearby-merchant">${item.merchant_name}</div>
+          <div class="nearby-cat">${item.category_name} · ${item.distance_m}m</div>
+        </div>
+        <div class="nearby-card-right">
+          <div class="nearby-rate">${card.reward_rate}${rateUnit}</div>
+          <div class="nearby-card-name">${card.bank_name} ${card.card_name}</div>
+        </div>
+      </div>`;
+    }).join("");
+
+    // 綁定點擊
+    nearbyList.querySelectorAll(".nearby-card").forEach((el) => {
+      el.addEventListener("click", () => {
+        const q = el.dataset.merchant;
+        location.hash = `#/result?type=merchant&q=${encodeURIComponent(q)}`;
+      });
+    });
+
+    // 推播通知（只通知第一個）
+    if (typeof Notify !== "undefined") {
+      Notify.requestPermission().then(() => {
+        Notify.notifyNearby(items[0]);
+      });
+    }
+  }
+
+  // 啟動定位
+  if (typeof Geo !== "undefined") {
+    Geo.startWatching(renderNearby);
+  }
 };

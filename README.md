@@ -2,7 +2,7 @@
 
 > **JetThAI Hackathon | 第一隊 #1 — 卡比獸**
 >
-> 選好你的卡，搜商家或選分類，秒看最佳刷卡推薦。
+> 選好你的卡，搜商家或選分類，秒看最佳刷卡推薦。走到商家附近自動推薦最佳刷卡！
 
 ## 產品概述
 
@@ -16,6 +16,7 @@
 - **智慧推薦** — 區分「我有的卡」vs「其他推薦」，有卡優先顯示
 - **回饋計算機** — 輸入消費金額，即時算出每張卡的回饋金額（含月上限警示）
 - **Fallback 機制** — 無回饋規則的商家自動回退到「國內一般消費」分類
+- **Geofencing 附近商家** — 瀏覽器定位偵測附近 500m 商家，自動推薦最佳刷卡，推播通知
 
 ---
 
@@ -34,6 +35,7 @@ card/
 │   ├── init_db.py            # SQLite schema
 │   ├── seed_data.py          # 種子資料（19 銀行 / 43 卡 / 133 回饋規則 / 46 商家）
 │   ├── query.py              # 查詢引擎（商家推薦、分類推薦、搜尋）
+│   ├── merchant_aliases.py   # OSM 商家名稱對照表（Geofencing 用）
 │   └── cards.db              # SQLite（.gitignore，Docker build 時重建）
 ├── templates/
 │   └── index.html            # SPA shell
@@ -45,8 +47,10 @@ card/
         ├── app.js             # SPA hash router
         ├── api.js             # API 呼叫封裝
         ├── store.js           # localStorage 卡片管理
+        ├── geo.js             # 瀏覽器 Geolocation 封裝（Geofencing）
+        ├── notify.js          # Notification API 封裝
         └── pages/
-            ├── home.js        # 首頁：卡片管理 + 搜尋 + 分類（一頁式）
+            ├── home.js        # 首頁：卡片管理 + 搜尋 + 分類 + 附近商家
             └── result.js      # 結果頁：推薦排序列表
 ```
 
@@ -61,6 +65,7 @@ card/
 | GET | `/api/recommend/merchant?q=星巴克&card_ids=1,5` | 商家推薦 |
 | GET | `/api/recommend/category?category_id=23&card_ids=1,5` | 分類推薦 |
 | GET | `/api/merchants/search?q=星` | 商家 autocomplete |
+| GET | `/api/nearby?lat=25.03&lng=121.56&card_ids=1,5` | Geofencing 附近商家推薦 |
 | GET | `/*` | SPA fallback (index.html) |
 
 ---
@@ -112,8 +117,55 @@ docker run -p 8000:8000 cardbrain
 |----|------|
 | 後端 | Python / FastAPI / SQLite |
 | 前端 | 純 HTML / CSS / JS（無框架）、SPA hash router |
+| Geofencing | Overpass API (OSM) + Geolocation API + Notification API |
 | PWA | manifest.json + Service Worker (network-first) |
 | 部署 | Docker → Zeabur |
+
+---
+
+## Geofencing 附近商家
+
+### 運作流程
+
+```
+瀏覽器 Geolocation API
+  → 取得 lat/lng（節流：60 秒間隔 + 50m 最小位移）
+  → GET /api/nearby?lat=25.03&lng=121.56
+      → 後端呼叫 Overpass API（查附近 500m POI）
+      → merchant_aliases 對照表匹配 DB 商家
+      → recommend_by_merchant() 取得最佳卡片
+      → 回傳附近商家 + 推薦卡片
+  → 首頁顯示「偵測到附近商家」區塊
+  → Notification API 推播通知
+```
+
+### API 回傳範例
+
+```json
+{
+  "nearby": [
+    {
+      "merchant_name": "星巴克",
+      "category_name": "咖啡店",
+      "distance_m": 120,
+      "top_card": {
+        "bank_name": "國泰世華",
+        "card_name": "CUBE 卡",
+        "reward_rate": 3.3,
+        "reward_type": "points",
+        "conditions": "樂饗購方案"
+      }
+    }
+  ]
+}
+```
+
+### 注意事項
+
+- **HTTPS 必要**：Geolocation API 需要 HTTPS（Zeabur 自帶 SSL）
+- **通知權限被拒**：不影響首頁的附近商家 UI，通知只是加分
+- **Overpass API 失敗**：靜默降級，不顯示附近區塊，不影響其他功能
+- **Debug 模式**：API 支援 `debug_lat` / `debug_lng` 參數模擬位置
 
 ---
 

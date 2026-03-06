@@ -1,10 +1,12 @@
-const CACHE_NAME = "cardbrain-v5";
+const CACHE_NAME = "cardbrain-v6";
 const PRECACHE = [
   "/",
   "/static/css/style.css",
   "/static/js/app.js",
   "/static/js/api.js",
   "/static/js/store.js",
+  "/static/js/geo.js",
+  "/static/js/notify.js",
   "/static/js/pages/home.js",
   "/static/js/pages/result.js",
 ];
