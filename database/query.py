@@ -30,6 +30,7 @@ def recommend_by_merchant(merchant_name: str, user_card_ids: list[int] | None = 
 
     query = """
         SELECT
+            c.id AS card_id,
             b.name AS bank_name,
             c.card_name,
             r.reward_type,
@@ -67,6 +68,7 @@ def recommend_by_category(category_name: str):
 
     cursor.execute("""
         SELECT
+            c.id AS card_id,
             b.name AS bank_name,
             c.card_name,
             r.reward_type,
@@ -114,6 +116,60 @@ def list_categories():
         LEFT JOIN categories p ON c.parent_id = p.id
         ORDER BY c.parent_id NULLS FIRST, c.id
     """)
+    results = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return results
+
+
+def recommend_by_category_id(category_id: int, user_card_ids: list[int] | None = None):
+    """依分類 ID 查詢最佳卡片，支援使用者卡片過濾"""
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    # 若傳入的是父分類，同時查其子分類
+    query = """
+        SELECT
+            c.id AS card_id,
+            b.name AS bank_name,
+            c.card_name,
+            r.reward_type,
+            r.reward_rate,
+            r.reward_cap,
+            r.conditions,
+            cat.name AS category_name
+        FROM rewards r
+        JOIN cards c ON r.card_id = c.id
+        JOIN banks b ON c.bank_id = b.id
+        JOIN categories cat ON r.category_id = cat.id
+        WHERE (cat.id = ? OR cat.parent_id = ?)
+    """
+    params: list = [category_id, category_id]
+
+    if user_card_ids:
+        placeholders = ",".join("?" * len(user_card_ids))
+        query += f" AND c.id IN ({placeholders})"
+        params.extend(user_card_ids)
+
+    query += " ORDER BY r.reward_rate DESC"
+
+    cursor.execute(query, params)
+    results = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return results
+
+
+def search_merchants(q: str):
+    """商家名稱模糊搜尋（autocomplete 用）"""
+    conn = get_conn()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT m.id, m.name, cat.name AS category_name
+        FROM merchants m
+        JOIN categories cat ON m.category_id = cat.id
+        WHERE m.name LIKE ?
+        ORDER BY m.name
+        LIMIT 10
+    """, (f"%{q}%",))
     results = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return results

@@ -1,0 +1,16 @@
+{
+  "name": "CardBrain — 最佳刷卡推薦",
+  "short_name": "CardBrain",
+  "description": "選擇你的信用卡，搜尋商家取得最佳刷卡推薦",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F9FA",
+  "theme_color": "#6C5CE7",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
