@@ -2,120 +2,80 @@
 
 > **JetThAI Hackathon | 第一隊 #1 — 卡比獸**
 >
-> 走進店家的瞬間，手機自動告訴你該刷哪張卡。
+> 選好你的卡，搜商家或選分類，秒看最佳刷卡推薦。
 
-## 產品願景
+## 產品概述
 
-目前市面上的信用卡優惠服務（如 iCard.AI、Money101），仍需要使用者**手動輸入店家**查詢，體驗不夠直覺。
+**CardBrain** 是一個 PWA 前端應用，讓使用者選擇自己擁有的信用卡，搜尋商家或瀏覽分類取得最佳刷卡推薦。
 
-**CardBrain** 要打造的是真正全自動的「隨身刷卡大腦」：
+### 核心功能
 
-- 事前設定你擁有的信用卡（個人化卡包）
-- 走進星巴克 → 手機自動推播：『建議刷國泰 CUBE 卡，回饋 3%』
-- **結帳零思考**
-
-### 核心技術
-
-| 技術 | 用途 |
-|------|------|
-| **LBS 地理圍欄 (Geofencing)** | 自動偵測使用者進入商家範圍 |
-| **Google Places API** | 辨識附近商家名稱 |
-| **匹配引擎** | 商家 → 消費分類 → 最佳卡片 |
-| **推播通知** | 即時推送刷卡建議 |
+- **我的卡組合** — 搜尋銀行/卡名，一鍵新增/移除
+- **商家搜尋** — 輸入商家名稱，即時 autocomplete，查看推薦卡片
+- **分類瀏覽** — 8 大消費分類 + 34 子分類，點選查看回饋排行
+- **智慧推薦** — 區分「我有的卡」vs「其他推薦」，有卡優先顯示
+- **Fallback 機制** — 無回饋規則的商家自動回退到「國內一般消費」分類
 
 ---
 
 ## 系統架構
 
 ```
-使用者手機
-  │
-  ├── 地理圍欄偵測 (Geofencing)
-  │     └── 進入商家範圍時觸發
-  │
-  ├── 個人化卡包 (My Cards)
-  │     └── 使用者設定擁有的信用卡
-  │
-  └── 推播通知 (Push Notification)
-        └── 自動推送最佳刷卡建議
-              │
-              ▼
-         Backend API
-              │
-  ┌───────────┼───────────┐
-  ▼           ▼           ▼
-位置比對    優惠匹配    通知引擎
-Location   Offer Match  Push Service
-Matching   Engine
-              │
-     ┌────────┼────────┐
-     ▼        ▼        ▼
-  商家 DB   信用卡    Google
-  + 位置   優惠 DB   Places API
+FastAPI 單一容器（API + 靜態前端）
+部署於 Zeabur，Dockerfile 自動建置
+
+card/
+├── app.py                    # FastAPI 入口（API + SPA fallback）
+├── requirements.txt          # fastapi, uvicorn
+├── Dockerfile                # Zeabur 部署用
+├── database/
+│   ├── __init__.py
+│   ├── init_db.py            # SQLite schema
+│   ├── seed_data.py          # 種子資料（19 銀行 / 43 卡 / 133 回饋規則 / 46 商家）
+│   ├── query.py              # 查詢引擎（商家推薦、分類推薦、搜尋）
+│   └── cards.db              # SQLite（.gitignore，Docker build 時重建）
+├── templates/
+│   └── index.html            # SPA shell
+└── static/
+    ├── manifest.json          # PWA
+    ├── sw.js                  # Service Worker（network-first）
+    ├── css/style.css          # Mobile-first CSS, max-width 480px
+    └── js/
+        ├── app.js             # SPA hash router
+        ├── api.js             # API 呼叫封裝
+        ├── store.js           # localStorage 卡片管理
+        └── pages/
+            ├── home.js        # 首頁：卡片管理 + 搜尋 + 分類（一頁式）
+            └── result.js      # 結果頁：推薦排序列表
 ```
 
 ---
 
-## 資料庫結構
+## API Endpoints
+
+| Method | Path | 說明 |
+|--------|------|------|
+| GET | `/api/cards` | 全部 43 張信用卡 |
+| GET | `/api/categories` | 巢狀分類結構 |
+| GET | `/api/recommend/merchant?q=星巴克&card_ids=1,5` | 商家推薦 |
+| GET | `/api/recommend/category?category_id=23&card_ids=1,5` | 分類推薦 |
+| GET | `/api/merchants/search?q=星` | 商家 autocomplete |
+| GET | `/*` | SPA fallback (index.html) |
+
+---
+
+## 資料庫
 
 ```
-banks          → 銀行（國泰、中信、玉山...）
-cards          → 信用卡（CUBE卡、LINE Pay卡...）
-categories     → 消費分類（8大類 / 60+ 子分類）
-rewards        → 回饋規則（哪張卡在哪個分類有多少 % 回饋）
-merchants      → 商家（名稱、分類、GPS 座標）
+banks (19)  → cards (43)  → rewards (133)  → categories (42)
+                                              merchants (46)
 ```
 
 ### 資料關係
 
 ```
 商家 → 消費分類 → 回饋規則 → 信用卡 → 銀行
-星巴克 → 咖啡店 → 3% cashback → CUBE 卡 → 國泰世華
-```
-
----
-
-## 開發階段
-
-### Phase 1: 資料基礎 (目前)
-- [x] 本地 SQLite 資料庫架構
-- [x] 種子資料（8 張熱門卡、17 個子分類、12 家商家）
-- [x] 查詢引擎 MVP（商家 → 最佳卡片）
-- [ ] 爬蟲：從 Money101 擴充信用卡資料
-- [ ] 爬蟲：從銀行官網補充回饋規則
-- [ ] 完善消費分類 ↔ 商家對應
-
-### Phase 2: 後端 API
-- [ ] RESTful API（查詢最佳卡片）
-- [ ] 使用者卡包管理（CRUD）
-- [ ] 部署到雲端（Supabase / 其他）
-
-### Phase 3: 前端 + Geofencing
-- [ ] PWA 前端介面
-- [ ] Web Geolocation API 整合
-- [ ] Google Places API 商家辨識
-- [ ] Web Push Notification 推播
-
-### Phase 4: 進階功能
-- [ ] 原生 APP（iOS/Android）
-- [ ] 背景定位 + 地理圍欄
-- [ ] 即時優惠更新機制
-- [ ] 社群分享功能
-
----
-
-## 專案結構
-
-```
-card/
-├── README.md              # 本文件
-├── database/
-│   ├── init_db.py         # 資料庫初始化
-│   ├── seed_data.py       # 種子資料
-│   ├── query.py           # 查詢引擎
-│   └── cards.db           # SQLite 資料庫檔案
-├── scraper/               # (待建) 資料爬蟲
-└── api/                   # (待建) 後端 API
+星巴克 → 咖啡店 → 3.3% points → CUBE 卡 → 國泰世華
 ```
 
 ---
@@ -123,26 +83,36 @@ card/
 ## 快速開始
 
 ```bash
-# 1. 初始化資料庫
-python database/init_db.py
+# 安裝依賴
+pip install -r requirements.txt
 
-# 2. 匯入種子資料
-python database/seed_data.py
+# 初始化資料庫 + 種子資料
+python -m database.init_db
+python -m database.seed_data
 
-# 3. 執行 Demo
-python database/query.py
+# 啟動開發伺服器
+uvicorn app:app --reload
+```
+
+瀏覽器開啟 `http://localhost:8000`
+
+### Docker
+
+```bash
+docker build -t cardbrain .
+docker run -p 8000:8000 cardbrain
 ```
 
 ---
 
-## 參考資料來源
+## 技術棧
 
-| 來源 | 用途 |
-|------|------|
-| [Money101](https://www.money101.com.tw/) | 信用卡產品資料 |
-| [iCard.AI](https://icard.ai/diagnosis) | 消費分類體系參考 |
-| 各銀行官網 | 回饋規則細節 |
-| Google Places API | 商家位置辨識 |
+| 層 | 技術 |
+|----|------|
+| 後端 | Python / FastAPI / SQLite |
+| 前端 | 純 HTML / CSS / JS（無框架）、SPA hash router |
+| PWA | manifest.json + Service Worker (network-first) |
+| 部署 | Docker → Zeabur |
 
 ---
 
