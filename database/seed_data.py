@@ -118,7 +118,7 @@ def seed():
          "海外實體店最高11%，免登錄無最低消費"),
         # 玉山銀行
         (bank_map["玉山銀行"], "U Bear 卡", 0,
-         "行動支付/網購最高3%，影音平台最高10%"),
+         "行動支付/網購/國外最高10%，影音平台最高10%，需帳戶扣繳"),
         (bank_map["玉山銀行"], "Unicard", 3000,
          "百大通路最高4.5%，新戶最高7.5%"),
         (bank_map["玉山銀行"], "Pi 拍錢包信用卡", 0,
@@ -153,7 +153,7 @@ def seed():
          "影音/網購/遊戲加碼3%，最高10.5%，含momo/蝦皮/Netflix"),
         # 滙豐銀行
         (bank_map["滙豐銀行"], "匯鑽卡", 2000,
-         "行動支付/網購/外送最高3%，上限2000元/月，一般1%無上限"),
+         "行動支付/網購/外送/國外最高6%，上限2000元/月，需設自動扣繳，一般1%無上限"),
         (bank_map["滙豐銀行"], "Live+ 現金回饋卡", 2000,
          "購物通路3.88%上限888元/月，國內最高4.88%，海外5.88%"),
         (bank_map["滙豐銀行"], "現金回饋御璽卡", 2000,
@@ -220,9 +220,10 @@ def seed():
         (card_map["uniopen 聯名卡"], subcat_map["國內一般消費"], "cashback", 3.0, None, None),
 
         # --- 玉山 U Bear ---
-        (card_map["U Bear 卡"], subcat_map["網購"], "cashback", 3.0, None, "國內外線上消費"),
-        (card_map["U Bear 卡"], subcat_map["行動支付"], "cashback", 3.0, None, None),
+        (card_map["U Bear 卡"], subcat_map["網購"], "cashback", 10.0, None, "國內外線上消費，需帳戶扣繳"),
+        (card_map["U Bear 卡"], subcat_map["行動支付"], "cashback", 10.0, None, "需帳戶扣繳"),
         (card_map["U Bear 卡"], subcat_map["影音串流"], "cashback", 10.0, None, "Netflix/Disney+"),
+        (card_map["U Bear 卡"], subcat_map["海外消費"], "cashback", 10.0, None, "需帳戶扣繳"),
         (card_map["U Bear 卡"], subcat_map["超商"], "cashback", 3.0, None, None),
         (card_map["U Bear 卡"], subcat_map["外送平台"], "cashback", 3.0, None, None),
         (card_map["U Bear 卡"], subcat_map["國內一般消費"], "cashback", 1.0, None, None),
@@ -289,10 +290,11 @@ def seed():
         (card_map["LINE Bank 聯名卡"], subcat_map["遊戲"], "points", 10.5, None, "加碼3%"),
 
         # --- 滙豐 匯鑽卡 ---
-        (card_map["匯鑽卡"], subcat_map["行動支付"], "cashback", 3.0, 2000, "上限2000元/月"),
-        (card_map["匯鑽卡"], subcat_map["網購"], "cashback", 3.0, 2000, "國內外網購"),
-        (card_map["匯鑽卡"], subcat_map["外送平台"], "cashback", 3.0, 2000, None),
-        (card_map["匯鑽卡"], subcat_map["影音串流"], "cashback", 3.0, 2000, None),
+        (card_map["匯鑽卡"], subcat_map["行動支付"], "cashback", 6.0, 2000, "需設自動扣繳，上限2000元/月"),
+        (card_map["匯鑽卡"], subcat_map["網購"], "cashback", 6.0, 2000, "需設自動扣繳，國內外網購"),
+        (card_map["匯鑽卡"], subcat_map["外送平台"], "cashback", 6.0, 2000, "需設自動扣繳"),
+        (card_map["匯鑽卡"], subcat_map["影音串流"], "cashback", 6.0, 2000, "需設自動扣繳"),
+        (card_map["匯鑽卡"], subcat_map["海外消費"], "cashback", 6.0, 2000, "需設自動扣繳"),
         (card_map["匯鑽卡"], subcat_map["國內一般消費"], "cashback", 1.0, None, "無上限"),
 
         # --- 滙豐 Live+ ---
