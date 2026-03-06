@@ -575,6 +575,7 @@ body {
 }
 .nearby-map-wrap {
   position: relative;
+  z-index: 0;              /* 建立 stacking context，限制 Leaflet 內部 z-index */
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
