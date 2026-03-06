@@ -82,7 +82,7 @@ async function HomePage() {
   return `
     <!-- 附近商家地圖（預設隱藏，定位成功後顯示） -->
     <div class="nearby-section" id="nearbySection" style="display:none">
-      <div class="nearby-title">📍 附近商家地圖</div>
+      <div class="nearby-title" id="nearbyTitle">📍 定位中...</div>
       <div class="nearby-map-wrap">
         <div id="nearbyMap"></div>
       </div>
@@ -315,11 +315,12 @@ HomePage.init = () => {
   function renderNearby(data) {
     const { userLat, userLng, nearby } = data;
 
-    if (!nearby.length) {
-      nearbySection.style.display = "none";
-      return;
-    }
+    // 只要有座標就顯示地圖
     nearbySection.style.display = "";
+    const titleEl = document.getElementById("nearbyTitle");
+    titleEl.textContent = nearby.length
+      ? `📍 偵測到 ${nearby.length} 間附近商家`
+      : "📍 你的位置（附近暫無合作商家）";
 
     // 初始化或重置地圖
     if (!_nearbyMap) {
@@ -379,13 +380,17 @@ HomePage.init = () => {
     });
 
     // 自動 fit bounds
-    _nearbyMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
+    if (nearby.length) {
+      _nearbyMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
+    } else {
+      _nearbyMap.setView([userLat, userLng], 16);
+    }
 
     // 修正地圖在隱藏容器中的大小問題
     setTimeout(() => _nearbyMap.invalidateSize(), 100);
 
     // 推播通知（只通知第一個）
-    if (typeof Notify !== "undefined") {
+    if (nearby.length && typeof Notify !== "undefined") {
       Notify.requestPermission().then(() => {
         Notify.notifyNearby(nearby[0]);
       });

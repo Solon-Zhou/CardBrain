@@ -26,7 +26,11 @@ const Geo = (() => {
       const params = new URLSearchParams({ lat, lng });
       if (cardIds.length) params.set("card_ids", cardIds.join(","));
       const res = await fetch(`/api/nearby?${params}`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        // API 失敗仍顯示使用者位置
+        callback({ userLat: lat, userLng: lng, nearby: [] });
+        return;
+      }
       const data = await res.json();
       callback({
         userLat: data.user_lat ?? lat,
@@ -34,7 +38,8 @@ const Geo = (() => {
         nearby: data.nearby || [],
       });
     } catch {
-      // 靜默降級
+      // API 例外仍顯示使用者位置
+      callback({ userLat: lat, userLng: lng, nearby: [] });
     }
   }
 
