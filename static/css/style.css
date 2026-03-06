@@ -481,6 +481,72 @@ body {
 .badge-cashback { background: #DFE6E9; color: #2D3436; }
 .badge-points { background: #FFEAA7; color: #FDCB6E; }
 .badge-miles { background: #81ECEC; color: #00B894; }
+/* ── Calculator ────────────────────────────── */
+.calc-bar {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.calc-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  display: block;
+  margin-bottom: 6px;
+}
+.calc-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.calc-dollar {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+.calc-input {
+  flex: 1;
+  border: none;
+  border-bottom: 2px solid var(--primary);
+  font-size: 20px;
+  font-weight: 700;
+  padding: 4px 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+}
+.calc-input::placeholder {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--border);
+}
+.result-calc {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 4px 0;
+}
+.calc-arrow {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 14px;
+}
+.calc-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.calc-unit {
+  font-size: 13px;
+  color: var(--accent);
+}
+.calc-cap-warn {
+  font-size: 11px;
+  color: var(--danger);
+}
+
 .result-empty {
   text-align: center;
   padding: 40px 20px;
