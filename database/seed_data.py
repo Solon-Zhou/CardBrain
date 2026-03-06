@@ -15,7 +15,7 @@ def seed():
     cursor = conn.cursor()
 
     # ============================================================
-    # 銀行（11 家）
+    # 銀行（19 家）
     # ============================================================
     banks = [
         ("國泰世華",),
@@ -29,6 +29,14 @@ def seed():
         ("遠東商銀",),
         ("第一銀行",),
         ("美國運通",),
+        ("星展銀行",),
+        ("凱基銀行",),
+        ("新光銀行",),
+        ("華南銀行",),
+        ("兆豐銀行",),
+        ("渣打銀行",),
+        ("合作金庫",),
+        ("台灣企銀",),
     ]
     cursor.executemany("INSERT OR IGNORE INTO banks (name) VALUES (?)", banks)
 
@@ -87,6 +95,9 @@ def seed():
         (cat_map["娛樂休閒"], "影音串流", None),
         (cat_map["娛樂休閒"], "遊戲", None),
         (cat_map["娛樂休閒"], "電影院", None),
+        # 其他
+        (cat_map["其他"], "綠色消費", None),
+        (cat_map["其他"], "電動車充電", None),
         # 旅遊住宿
         (cat_map["旅遊住宿"], "訂房網站", None),
         (cat_map["旅遊住宿"], "航空公司", None),
@@ -145,7 +156,7 @@ def seed():
          "特選通路含網購5%，綁全支付加碼3%，國外最高10%"),
         # 富邦銀行
         (bank_map["富邦銀行"], "J 卡", 0,
-         "日韓旅遊神卡，海外高回饋"),
+         "日韓3%無上限+實體加碼3%+交通卡加碼7%，最高13%"),
         # 聯邦銀行
         (bank_map["聯邦銀行"], "賴點卡", 0,
          "LINE Points 回饋"),
@@ -179,6 +190,38 @@ def seed():
         # 美國運通
         (bank_map["美國運通"], "長榮航空白金卡", 36800,
          "國內25元/哩，國外16.67元/哩，新戶首刷65000哩"),
+        # 星展銀行
+        (bank_map["星展銀行"], "eco 永續卡", 0,
+         "國內1.2%無上限，國外最高5%，綠色消費最高10%"),
+        (bank_map["星展銀行"], "傳說對決聯名卡", 0,
+         "國內1.2%無上限，國外2.5%無上限，生活玩家精選通路10%"),
+        # 凱基銀行
+        (bank_map["凱基銀行"], "魔BUY卡", 0,
+         "綁Apple Pay享4%，行動支付14大支付，需月消費滿3000"),
+        # 新光銀行
+        (bank_map["新光銀行"], "寰宇現金回饋卡", 0,
+         "海外3%，指定數位3%，國內1%，需完成任務"),
+        # 華南銀行
+        (bank_map["華南銀行"], "超鑽現金回饋卡", 0,
+         "國內最高2%，國外最高3.2%，需完成三項任務，加碼上限2000元"),
+        (bank_map["華南銀行"], "i網購生活卡", 0,
+         "網購最高2%回饋"),
+        # 兆豐銀行
+        (bank_map["兆豐銀行"], "利多御璽卡", 0,
+         "綁行動支付最高6%，台灣Pay掃碼加碼1.5%，合計最高7.5%"),
+        (bank_map["兆豐銀行"], "e秒刷鈦金卡", 0,
+         "一般0.5%，網購3%上限月刷10000，需電子帳單+自動扣繳"),
+        # 渣打銀行
+        (bank_map["渣打銀行"], "渣打現金回饋御璽卡", 0,
+         "國內外1%，優先理財最高2%，年消費24次免次年年費"),
+        # 合作金庫
+        (bank_map["合作金庫"], "卡娜赫拉綠卡", 0,
+         "國內1%/國外2%無上限，行動支付台灣Pay最高11%，上限低"),
+        (bank_map["合作金庫"], "i享樂生活卡", 0,
+         "國內1%/國外2%無上限，悠遊加值5%/LINE Pay 6%上限各100元/月"),
+        # 台灣企銀
+        (bank_map["台灣企銀"], "永續生活卡", 0,
+         "國內最高2.5%，國外最高3.5%，綠色餐廳10%，高鐵8.5%"),
     ]
     cursor.executemany(
         "INSERT OR IGNORE INTO cards (bank_id, card_name, annual_fee, note) VALUES (?, ?, ?, ?)",
@@ -280,9 +323,10 @@ def seed():
         (card_map["現金回饋 JCB 卡"], subcat_map["行動支付"], "cashback", 3.0, None, "綁全支付"),
 
         # --- 富邦 J 卡 ---
-        (card_map["J 卡"], subcat_map["日本消費"], "cashback", 3.0, None, None),
-        (card_map["J 卡"], subcat_map["韓國消費"], "cashback", 3.0, None, None),
-        (card_map["J 卡"], subcat_map["海外消費"], "cashback", 3.0, None, None),
+        (card_map["J 卡"], subcat_map["日本消費"], "points", 6.0, None, "基本3%+實體加碼3%，需單筆滿1000"),
+        (card_map["J 卡"], subcat_map["韓國消費"], "points", 6.0, None, "基本3%+實體加碼3%，需單筆滿1000"),
+        (card_map["J 卡"], subcat_map["海外消費"], "points", 3.0, None, "無上限"),
+        (card_map["J 卡"], subcat_map["大眾運輸"], "points", 13.0, None, "日韓交通卡加碼7%，需登錄限量"),
 
         # --- 聯邦 LINE Bank ---
         (card_map["LINE Bank 聯名卡"], subcat_map["影音串流"], "points", 10.5, None, "Netflix/Disney+，LINE Points"),
@@ -352,6 +396,64 @@ def seed():
         # --- 美國運通 長榮白金 ---
         (card_map["長榮航空白金卡"], subcat_map["航空公司"], "miles", 6.0, None, "國外16.67元/哩"),
         (card_map["長榮航空白金卡"], subcat_map["國內一般消費"], "miles", 4.0, None, "國內25元/哩"),
+
+        # --- 星展 eco 永續卡 ---
+        (card_map["eco 永續卡"], subcat_map["國內一般消費"], "cashback", 1.2, None, "無上限"),
+        (card_map["eco 永續卡"], subcat_map["海外消費"], "cashback", 5.0, None, "日韓泰歐美新加坡，含加碼3.8%"),
+        (card_map["eco 永續卡"], subcat_map["日本消費"], "cashback", 5.0, None, "含加碼3.8%"),
+        (card_map["eco 永續卡"], subcat_map["綠色消費"], "cashback", 10.0, None, "Tesla/Gogoro/社會企業"),
+        (card_map["eco 永續卡"], subcat_map["電動車充電"], "cashback", 10.0, None, "Tesla充電/Gogoro電池"),
+
+        # --- 星展 傳說對決聯名卡 ---
+        (card_map["傳說對決聯名卡"], subcat_map["國內一般消費"], "cashback", 1.2, None, "無上限"),
+        (card_map["傳說對決聯名卡"], subcat_map["海外消費"], "cashback", 2.5, None, "無上限"),
+        (card_map["傳說對決聯名卡"], subcat_map["遊戲"], "cashback", 10.0, 3333, "生活玩家精選通路，上限3333元/月"),
+        (card_map["傳說對決聯名卡"], subcat_map["影音串流"], "cashback", 10.0, 3333, "生活玩家精選通路"),
+
+        # --- 凱基 魔BUY卡 ---
+        (card_map["魔BUY卡"], subcat_map["行動支付"], "cashback", 4.0, None, "綁Apple Pay，月消費需滿3000"),
+        (card_map["魔BUY卡"], subcat_map["國內一般消費"], "cashback", 1.0, None, None),
+
+        # --- 新光 寰宇現金回饋卡 ---
+        (card_map["寰宇現金回饋卡"], subcat_map["海外消費"], "cashback", 3.0, None, "需完成任務"),
+        (card_map["寰宇現金回饋卡"], subcat_map["網購"], "cashback", 3.0, None, "指定數位通路"),
+        (card_map["寰宇現金回饋卡"], subcat_map["國內一般消費"], "cashback", 1.0, None, None),
+        (card_map["寰宇現金回饋卡"], subcat_map["行動支付"], "cashback", 3.0, 300, "台灣Pay，上限300元/月"),
+
+        # --- 華南 超鑽現金回饋卡 ---
+        (card_map["超鑽現金回饋卡"], subcat_map["國內一般消費"], "cashback", 2.0, 2000, "需完成三項任務，加碼上限2000元"),
+        (card_map["超鑽現金回饋卡"], subcat_map["海外消費"], "cashback", 3.2, 2000, "需完成三項任務"),
+
+        # --- 華南 i網購生活卡 ---
+        (card_map["i網購生活卡"], subcat_map["網購"], "cashback", 2.0, None, None),
+
+        # --- 兆豐 利多御璽卡 ---
+        (card_map["利多御璽卡"], subcat_map["行動支付"], "cashback", 7.5, None, "綁行動支付6%+台灣Pay掃碼1.5%，需登錄"),
+        (card_map["利多御璽卡"], subcat_map["國內一般消費"], "cashback", 0.5, None, None),
+
+        # --- 兆豐 e秒刷鈦金卡 ---
+        (card_map["e秒刷鈦金卡"], subcat_map["網購"], "cashback", 3.0, None, "月刷上限10000，需電子帳單+自動扣繳"),
+        (card_map["e秒刷鈦金卡"], subcat_map["國內一般消費"], "cashback", 0.5, None, None),
+
+        # --- 渣打 現金回饋御璽卡 ---
+        (card_map["渣打現金回饋御璽卡"], subcat_map["國內一般消費"], "cashback", 1.0, None, "優先理財最高2%"),
+        (card_map["渣打現金回饋御璽卡"], subcat_map["海外消費"], "cashback", 1.0, None, "優先理財最高2%"),
+
+        # --- 合庫 卡娜赫拉綠卡 ---
+        (card_map["卡娜赫拉綠卡"], subcat_map["國內一般消費"], "cashback", 1.0, None, "無上限"),
+        (card_map["卡娜赫拉綠卡"], subcat_map["海外消費"], "cashback", 2.0, None, "無上限"),
+        (card_map["卡娜赫拉綠卡"], subcat_map["行動支付"], "cashback", 11.0, None, "台灣Pay，月消費滿2999，月刷上限1000"),
+
+        # --- 合庫 i享樂生活卡 ---
+        (card_map["i享樂生活卡"], subcat_map["國內一般消費"], "cashback", 1.0, None, "無上限"),
+        (card_map["i享樂生活卡"], subcat_map["海外消費"], "cashback", 2.0, None, "無上限"),
+        (card_map["i享樂生活卡"], subcat_map["大眾運輸"], "cashback", 5.0, 100, "悠遊卡加值，月消費滿2999，上限100元/月"),
+
+        # --- 台灣企銀 永續生活卡 ---
+        (card_map["永續生活卡"], subcat_map["國內一般消費"], "cashback", 2.5, None, "需開Hokii帳戶扣繳"),
+        (card_map["永續生活卡"], subcat_map["海外消費"], "cashback", 3.5, None, None),
+        (card_map["永續生活卡"], subcat_map["綠色消費"], "cashback", 10.0, None, "週五～日綠色餐廳，月消費滿6000"),
+        (card_map["永續生活卡"], subcat_map["高鐵"], "cashback", 8.5, 300, "月消費滿20000，上限300元/月"),
     ]
     cursor.executemany(
         """INSERT OR IGNORE INTO rewards
