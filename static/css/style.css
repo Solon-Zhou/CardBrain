@@ -51,7 +51,7 @@ body {
 
 /* ── Page Container ───────────────────────── */
 #page-container {
-  padding: 16px 16px calc(var(--tab-height) + var(--safe-bottom) + 16px);
+  padding: 16px 16px 24px;
   min-height: calc(100dvh - var(--header-height));
 }
 

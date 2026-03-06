@@ -3,11 +3,9 @@
  */
 (() => {
   const container = document.getElementById("page-container");
-  const tabs = document.querySelectorAll(".tab-item");
 
   const routes = {
     "/": HomePage,
-    "/my-cards": MyCardsPage,
     "/result": ResultPage,
   };
 
@@ -34,12 +32,6 @@
     const { path, search } = getRoute();
     const params = parseParams(search);
     const render = routes[path] || routes["/"];
-
-    // update tab highlights
-    tabs.forEach((t) => {
-      const href = t.getAttribute("href").replace("#", "");
-      t.classList.toggle("active", href === path);
-    });
 
     container.innerHTML = '<div class="spinner">載入中...</div>';
     container.className = "page-enter";
