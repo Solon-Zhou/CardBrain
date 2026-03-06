@@ -332,12 +332,13 @@ HomePage.init = () => {
   }
 
   function renderNearby(data) {
-    const { userLat, userLng, nearby } = data;
+    const { userLat, userLng, nearby, accuracy } = data;
 
     _hidePermissionPrompt();
+    const accText = accuracy ? `（精度 ~${Math.round(accuracy)}m）` : "";
     titleEl.textContent = nearby.length
       ? `📍 偵測到 ${nearby.length} 間附近商家`
-      : "📍 你的位置（附近暫無合作商家）";
+      : `📍 你的位置${accText}（附近暫無合作商家）`;
 
     // 初始化或重置地圖
     if (!_nearbyMap) {
@@ -356,14 +357,24 @@ HomePage.init = () => {
       _mapLayerGroup.clearLayers();
     }
 
-    // 使用者位置 — 藍色圓形
+    // 使用者位置 — 精度圈 + 藍色圓點
+    if (accuracy) {
+      const accCircle = L.circle([userLat, userLng], {
+        radius: accuracy,
+        fillColor: "#4A90D9",
+        fillOpacity: 0.1,
+        color: "#4A90D9",
+        weight: 1,
+      });
+      _mapLayerGroup.addLayer(accCircle);
+    }
     const userMarker = L.circleMarker([userLat, userLng], {
       radius: 10,
       fillColor: "#4A90D9",
       fillOpacity: 0.9,
       color: "#fff",
       weight: 3,
-    }).bindPopup('<div class="nearby-popup"><b>你在這裡</b></div>');
+    }).bindPopup(`<div class="nearby-popup"><b>你在這裡</b>${accuracy ? `<br><span style="font-size:11px;color:#636E72">精度 ~${Math.round(accuracy)}m</span>` : ""}</div>`);
     _mapLayerGroup.addLayer(userMarker);
 
     const bounds = L.latLngBounds([[userLat, userLng]]);

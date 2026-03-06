@@ -20,15 +20,14 @@ const Geo = (() => {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
-  async function _fetchNearby(lat, lng, callback) {
+  async function _fetchNearby(lat, lng, callback, accuracy) {
     try {
       const cardIds = Store.getMyCards();
       const params = new URLSearchParams({ lat, lng });
       if (cardIds.length) params.set("card_ids", cardIds.join(","));
       const res = await fetch(`/api/nearby?${params}`);
       if (!res.ok) {
-        // API 失敗仍顯示使用者位置
-        callback({ userLat: lat, userLng: lng, nearby: [] });
+        callback({ userLat: lat, userLng: lng, nearby: [], accuracy });
         return;
       }
       const data = await res.json();
@@ -36,15 +35,15 @@ const Geo = (() => {
         userLat: data.user_lat ?? lat,
         userLng: data.user_lng ?? lng,
         nearby: data.nearby || [],
+        accuracy,
       });
     } catch {
-      // API 例外仍顯示使用者位置
-      callback({ userLat: lat, userLng: lng, nearby: [] });
+      callback({ userLat: lat, userLng: lng, nearby: [], accuracy });
     }
   }
 
   function _onPosition(pos, callback) {
-    const { latitude: lat, longitude: lng } = pos.coords;
+    const { latitude: lat, longitude: lng, accuracy } = pos.coords;
     const now = Date.now();
 
     // 節流：間隔 + 位移
@@ -56,7 +55,7 @@ const Geo = (() => {
     lastLat = lat;
     lastLng = lng;
     lastFetchTime = now;
-    _fetchNearby(lat, lng, callback);
+    _fetchNearby(lat, lng, callback, accuracy);
   }
 
   /**
@@ -70,14 +69,14 @@ const Geo = (() => {
     navigator.geolocation.getCurrentPosition(
       (pos) => _onPosition(pos, onNearby),
       () => {}, // 權限被拒，靜默
-      { enableHighAccuracy: false, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
 
     // 持續監聽
     watchId = navigator.geolocation.watchPosition(
       (pos) => _onPosition(pos, onNearby),
       () => {},
-      { enableHighAccuracy: false, maximumAge: 60000 }
+      { enableHighAccuracy: true, maximumAge: 60000 }
     );
   }
 
@@ -97,7 +96,7 @@ const Geo = (() => {
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         reject,
-        { enableHighAccuracy: false, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 10000 }
       );
     });
   }
