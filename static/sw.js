@@ -1,4 +1,4 @@
-const CACHE_NAME = "cardbrain-v1";
+const CACHE_NAME = "cardbrain-v2";
 const PRECACHE = [
   "/",
   "/static/css/style.css",
@@ -31,16 +31,17 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
 
-  // API calls: network first
-  if (url.pathname.startsWith("/api/")) {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
-    );
-    return;
-  }
-
-  // Static assets: cache first
+  // All requests: network first, fallback to cache
   e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
+    fetch(e.request)
+      .then((res) => {
+        // cache a fresh copy
+        if (res.ok && url.origin === self.location.origin) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+        }
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
