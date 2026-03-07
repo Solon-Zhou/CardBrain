@@ -37,45 +37,36 @@ async function HomePage() {
   const thumbsHtml = _buildThumbs(allCards);
 
   return `
-    <!-- Agent Hero + 聊天區 -->
-    <div class="agent-section">
-      <div class="agent-hero">
-        <div class="agent-hero-icon">🧠</div>
-        <div class="agent-hero-text">
-          <div class="agent-hero-title">CardBrain Agent</div>
-          <div class="agent-hero-sub">告訴我消費情境，AI 幫你秒算最佳刷卡</div>
-        </div>
-      </div>
-      <div class="agent-messages" id="agentMessages">
-        <div class="agent-bubble bot">
-          <div class="agent-avatar">🧠</div>
-          <div class="agent-text">嗨！輸入<strong>商家 + 金額</strong>，我幫你找最划算的卡。<br>例如「星巴克 300」或「日本旅遊 10萬」</div>
-        </div>
-      </div>
-      <div class="agent-quick-tags" id="agentQuickTags">
-        <span class="agent-tag" data-msg="星巴克 300"><span class="agent-tag-emoji">☕</span>星巴克 300</span>
-        <span class="agent-tag" data-msg="全聯 2000"><span class="agent-tag-emoji">🛒</span>全聯 2000</span>
-        <span class="agent-tag" data-msg="日本旅遊 10萬"><span class="agent-tag-emoji">✈️</span>日本 10萬</span>
-        <span class="agent-tag" data-msg="加油 1500"><span class="agent-tag-emoji">⛽</span>加油 1500</span>
-      </div>
-      <div class="agent-input-bar">
-        <input class="agent-input" id="agentInput"
-          type="text" placeholder="輸入商家 + 金額..." autocomplete="off">
-        <button class="agent-send-btn" id="agentSendBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
-      </div>
-    </div>
-
     <!-- 我的卡組合 -->
     <div class="mycard-section">
-      <div class="mycard-header">
-        <div class="mycard-title">💳 我的卡組合</div>
-        <div class="mycard-desc">管理你的信用卡</div>
-      </div>
+      <div class="mycard-title">【我的卡組合】</div>
+      <div class="mycard-desc">點擊 + 新增信用卡，點擊 × 移除</div>
       <div class="mycard-thumbs" id="cardThumbs">
         ${thumbsHtml}
         <div class="card-thumb-add" id="btnAddCard"><span>+</span></div>
+      </div>
+    </div>
+
+    <!-- Agent 聊天區 -->
+    <div class="agent-section">
+      <div class="agent-messages" id="agentMessages">
+        <div class="agent-bubble bot">
+          <div class="agent-avatar">🧠</div>
+          <div class="agent-text">嗨！我是 CardBrain Agent，告訴我你的消費情境，我幫你找最划算的卡。<br><br>試試看：「星巴克 300」、「全聯 2000」、「日本旅遊 10萬」</div>
+        </div>
+      </div>
+      <div class="agent-quick-tags" id="agentQuickTags">
+        <span class="agent-tag" data-msg="星巴克 300">☕ 星巴克 300</span>
+        <span class="agent-tag" data-msg="全聯 2000">🛒 全聯 2000</span>
+        <span class="agent-tag" data-msg="日本旅遊 10萬">✈️ 日本 10萬</span>
+        <span class="agent-tag" data-msg="加油 1500">⛽ 加油 1500</span>
+      </div>
+      <div class="agent-input-bar">
+        <input class="agent-input" id="agentInput"
+          type="text" placeholder="輸入消費情境，例如「星巴克 300」" autocomplete="off">
+        <button class="agent-send-btn" id="agentSendBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
       </div>
     </div>
 
