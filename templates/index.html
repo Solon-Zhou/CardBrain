@@ -17,8 +17,26 @@
   <div id="app-root">
     <!-- header -->
     <header class="app-header">
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="選單">
+        <span></span><span></span><span></span>
+      </button>
       <h1 class="logo">🧠 CardBrain</h1>
     </header>
+
+    <!-- side navigation -->
+    <div class="sidenav-overlay" id="sideNavOverlay"></div>
+    <nav class="sidenav" id="sideNav">
+      <div class="sidenav-header">🧠 CardBrain</div>
+      <a class="sidenav-link active" href="#/">
+        <span class="sidenav-icon">💬</span>AI 助理
+      </a>
+      <a class="sidenav-link" href="#/cards">
+        <span class="sidenav-icon">💳</span>我的卡片
+      </a>
+      <a class="sidenav-link" href="#/nearby">
+        <span class="sidenav-icon">📍</span>附近商家
+      </a>
+    </nav>
 
     <!-- main content area (pages render here) -->
     <main id="page-container"></main>
@@ -30,6 +48,8 @@
   <script src="/static/js/geo.js"></script>
   <script src="/static/js/notify.js"></script>
   <script src="/static/js/pages/home.js"></script>
+  <script src="/static/js/pages/cards.js"></script>
+  <script src="/static/js/pages/nearby.js"></script>
   <script src="/static/js/pages/result.js"></script>
   <script src="/static/js/app.js"></script>
   <script>
