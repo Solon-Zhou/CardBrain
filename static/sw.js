@@ -1,4 +1,4 @@
-const CACHE_NAME = "cardbrain-v11";
+const CACHE_NAME = "cardbrain-v30";
 const PRECACHE = [
   "/",
   "/static/css/style.css",
@@ -9,6 +9,9 @@ const PRECACHE = [
   "/static/js/notify.js",
   "/static/js/pages/home.js",
   "/static/js/pages/result.js",
+  "/static/js/pages/instant.js",
+  "/static/js/pages/regret.js",
+  "/static/js/pages/planner.js",
 ];
 
 self.addEventListener("install", (e) => {
