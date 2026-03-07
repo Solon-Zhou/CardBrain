@@ -6,10 +6,10 @@
 
 | 成員 | 角色 | 負責領域 |
 |------|------|----------|
-| **Sunu** | Team Lead | 統籌協調、Skill 架構、Demo 流程設計 |
+| **Sunu** | 工程師 | 部署 + Zeabur + Skill 包裝 |
 | **Stone** | 工程師 | 前端功能 + UX 優化 |
 | **Alan** | 工程師 | 後端 API + 資料庫擴充 |
-| **Rita** | 工程師 | 部署 + PWA + Skill 包裝 |
+| **Rita** | 工程師 | PWA + 基礎建設 + 效能 |
 | **Hera** | 美術 | UI 設計 + 視覺素材 + 簡報 |
 | **Wade** | QA | 測試 + Bug 回報 + 驗收 |
 
@@ -17,14 +17,15 @@
 
 ## 工作分配
 
-### Sunu — Team Lead / 統籌
+### Sunu — 工程師 / 部署 + Skill 包裝
 
 | # | 任務 | 說明 | 狀態 |
 |---|------|------|------|
-| S1 | Skill 包裝策略 | 定義哪些模組要包成獨立 Skill，確保 3/18 能快速組裝 | ⬜ |
-| S2 | Demo 腳本設計 | 設計 Hackathon 當天的 Demo 流程（定位 → 推薦 → 刷卡），確保亮點突出 | ⬜ |
-| S3 | 進度追蹤 | 每日確認各成員進度，協調跨職能依賴 | ⬜ |
-| S4 | 產品需求確認 | 確認功能優先級、決定哪些功能保留/砍掉 | ⬜ |
+| S1 | Zeabur 部署管理 | Docker build → Zeabur 部署，確保線上環境穩定 | ⬜ |
+| S2 | Skill 包裝策略 | 定義哪些模組要包成獨立 Skill，確保 3/18 能快速組裝 | ⬜ |
+| S3 | 部署 Skill 包裝 | 整理 `zeabur-deploy-skill`，確保一鍵部署可用 | ⬜ |
+| S4 | 環境變數整理 | 整理所有環境變數，建立 `.env.example` | ⬜ |
+| S5 | CI/CD 自動化 | GitHub push → 自動部署到 Zeabur（如可行） | ⬜ |
 
 ### Stone — 前端工程師
 
@@ -46,16 +47,14 @@
 | B4 | API 錯誤處理強化 | 加入 rate limit 保護、Overpass fallback、錯誤回傳格式統一 | ⬜ |
 | B5 | 資料庫 Skill 包裝 | 把 `database/` 模組整理成可獨立執行的 Skill（含 seed data） | ⬜ |
 
-### Rita — 部署 + 基礎建設工程師
+### Rita — 工程師 / PWA + 基礎建設
 
 | # | 任務 | 說明 | 狀態 |
 |---|------|------|------|
-| D1 | Zeabur 部署驗證 | 確認 Docker build → Zeabur 部署流程順暢，記錄步驟 | ⬜ |
-| D2 | 環境變數整理 | 整理所有環境變數（如未來 API key），建立 `.env.example` | ⬜ |
-| D3 | CI/CD 自動化 | GitHub push → 自動部署到 Zeabur（如可行） | ⬜ |
-| D4 | PWA 完善 | 確認 manifest.json icons、splash screen、安裝提示都正常 | ⬜ |
-| D5 | 部署 Skill 包裝 | 整理 `zeabur-deploy-skill`，確保一鍵部署可用 | ⬜ |
-| D6 | 效能監控 | 加入基本的 API response time logging | ⬜ |
+| D1 | PWA 完善 | 確認 manifest.json icons、splash screen、安裝提示都正常 | ⬜ |
+| D2 | 離線體驗優化 | Service Worker 離線時顯示已快取的卡片資料和上次推薦 | ⬜ |
+| D3 | 效能監控 | 加入基本的 API response time logging | ⬜ |
+| D4 | PWA Skill 包裝 | 把 PWA 配置整理成可快速套用的 Skill | ⬜ |
 
 ### Hera — 美術 / UI 設計
 
@@ -84,36 +83,37 @@
 ## 優先級指引
 
 ### P0 — 必須完成（Demo 核心路徑）
-- B1 擴充信用卡資料
-- B2 擴充商家對照表
-- F1 地圖體驗優化
-- U4 App Icon
-- U5 簡報
-- Q1 功能測試清單
-- Q2 跨裝置測試
-- S2 Demo 腳本
+- B1 擴充信用卡資料（Alan）
+- B2 擴充商家對照表（Alan）
+- F1 地圖體驗優化（Stone）
+- S1 Zeabur 部署管理（Sunu）
+- U4 App Icon（Hera）
+- U5 簡報（Hera）
+- Q1 功能測試清單（Wade）
+- Q2 跨裝置測試（Wade）
 
 ### P1 — 應該完成（加分項）
-- B3 Nearby API 優化
-- F2 卡片比較
-- D1 部署驗證
-- D4 PWA 完善
-- U1 UI 風格定義
-- U2 卡片視覺升級
+- B3 Nearby API 優化（Alan）
+- F2 卡片比較（Stone）
+- D1 PWA 完善（Rita）
+- U1 UI 風格定義（Hera）
+- U2 卡片視覺升級（Hera）
 
 ### P2 — 有時間再做
-- B4 API 錯誤處理
-- F3 推薦分享
-- F4 離線體驗
-- D3 CI/CD
-- U3 地圖標記設計
-- U6 OG Image
+- B4 API 錯誤處理（Alan）
+- F3 推薦分享（Stone）
+- D2 離線體驗（Rita）
+- D3 效能監控（Rita）
+- S5 CI/CD（Sunu）
+- U3 地圖標記設計（Hera）
+- U6 OG Image（Hera）
 
 ### Skill 包裝（3/18 前必須完成）
-- S1 Skill 包裝策略
-- B5 資料庫 Skill
-- F5 前端 Skill
-- D5 部署 Skill
+- S2 Skill 包裝策略（Sunu）
+- S3 部署 Skill（Sunu）
+- B5 資料庫 Skill（Alan）
+- F5 前端 Skill（Stone）
+- D4 PWA Skill（Rita）
 
 ---
 
