@@ -7,8 +7,8 @@
 | 成員 | 角色 | 負責領域 |
 |------|------|----------|
 | **Sunu** | Team Lead | 統籌協調、Skill 架構、Demo 流程設計 |
-| **Stone** | 工程師 | 後端 API + 資料庫擴充 |
-| **Alan** | 工程師 | 前端功能 + UX 優化 |
+| **Stone** | 工程師 | 前端功能 + UX 優化 |
+| **Alan** | 工程師 | 後端 API + 資料庫擴充 |
 | **Rita** | 工程師 | 部署 + PWA + Skill 包裝 |
 | **Hera** | 美術 | UI 設計 + 視覺素材 + 簡報 |
 | **Wade** | QA | 測試 + Bug 回報 + 驗收 |
@@ -26,17 +26,7 @@
 | S3 | 進度追蹤 | 每日確認各成員進度，協調跨職能依賴 | ⬜ |
 | S4 | 產品需求確認 | 確認功能優先級、決定哪些功能保留/砍掉 | ⬜ |
 
-### Stone — 後端工程師
-
-| # | 任務 | 說明 | 狀態 |
-|---|------|------|------|
-| B1 | 擴充信用卡資料 | 從 Money101 補齊更多銀行/卡片/回饋規則（目前 19 銀行 43 卡，目標 25+ 銀行 60+ 卡） | ⬜ |
-| B2 | 擴充商家對照表 | `merchant_aliases.py` 補更多 OSM 商家名稱對照（目前 46 商家） | ⬜ |
-| B3 | Nearby API 優化 | 改善 Overpass API 查詢效率，增加 POI 類型覆蓋（如藥妝、書店） | ⬜ |
-| B4 | API 錯誤處理強化 | 加入 rate limit 保護、Overpass fallback、錯誤回傳格式統一 | ⬜ |
-| B5 | 資料庫 Skill 包裝 | 把 `database/` 模組整理成可獨立執行的 Skill（含 seed data） | ⬜ |
-
-### Alan — 前端工程師
+### Stone — 前端工程師
 
 | # | 任務 | 說明 | 狀態 |
 |---|------|------|------|
@@ -45,6 +35,16 @@
 | F3 | 推薦結果分享 | 推薦結果可產生分享連結或截圖 | ⬜ |
 | F4 | 離線體驗優化 | Service Worker 離線時顯示已快取的卡片資料和上次推薦 | ⬜ |
 | F5 | 前端 Skill 包裝 | 把 SPA 前端整理成可快速部署的 Skill（含 router、components） | ⬜ |
+
+### Alan — 後端工程師
+
+| # | 任務 | 說明 | 狀態 |
+|---|------|------|------|
+| B1 | 擴充信用卡資料 | 從 Money101 補齊更多銀行/卡片/回饋規則（目前 19 銀行 43 卡，目標 25+ 銀行 60+ 卡） | ⬜ |
+| B2 | 擴充商家對照表 | `merchant_aliases.py` 補更多 OSM 商家名稱對照（目前 46 商家） | ⬜ |
+| B3 | Nearby API 優化 | 改善 Overpass API 查詢效率，增加 POI 類型覆蓋（如藥妝、書店） | ⬜ |
+| B4 | API 錯誤處理強化 | 加入 rate limit 保護、Overpass fallback、錯誤回傳格式統一 | ⬜ |
+| B5 | 資料庫 Skill 包裝 | 把 `database/` 模組整理成可獨立執行的 Skill（含 seed data） | ⬜ |
 
 ### Rita — 部署 + 基礎建設工程師
 
@@ -135,9 +135,9 @@ PWA: manifest.json + Service Worker (network-first)
 
 | 問題 | 狀態 | 負責 |
 |------|------|------|
-| 桌面瀏覽器定位精度差（IP 定位偏移） | 已加精度圈提示 | Alan |
-| Leaflet z-index 穿透 Modal | 已修復 | Alan |
-| 商家對照表覆蓋不足 | 待擴充 | Stone |
+| 桌面瀏覽器定位精度差（IP 定位偏移） | 已加精度圈提示 | Stone |
+| Leaflet z-index 穿透 Modal | 已修復 | Stone |
+| 商家對照表覆蓋不足 | 待擴充 | Alan |
 
 ---
 
