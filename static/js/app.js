@@ -7,6 +7,9 @@
   const routes = {
     "/": HomePage,
     "/result": ResultPage,
+    "/instant": InstantPage,
+    "/regret": RegretPage,
+    "/planner": PlannerPage,
   };
 
   function getRoute() {

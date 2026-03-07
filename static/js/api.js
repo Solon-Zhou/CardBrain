@@ -32,5 +32,19 @@ const API = (() => {
     return fetchJSON(`/api/merchants/search?q=${encodeURIComponent(q)}`);
   }
 
-  return { getCards, getCategories, recommendByMerchant, recommendByCategory, searchMerchants };
+  async function brain(payload) {
+    // 自動帶入使用者卡片
+    if (!payload.card_ids) {
+      payload.card_ids = Store.getMyCards();
+    }
+    const res = await fetch("/api/brain", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+  }
+
+  return { getCards, getCategories, recommendByMerchant, recommendByCategory, searchMerchants, brain };
 })();

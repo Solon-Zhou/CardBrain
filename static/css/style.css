@@ -683,3 +683,652 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 .page-enter { animation: fadeIn 0.2s ease-out; }
+
+/* ══════════════════════════════════════════════
+   CardBrain 3.0 — 新增樣式
+   ══════════════════════════════════════════════ */
+
+/* ── Brain Mode Cards (首頁入口) ───────────── */
+.brain-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.brain-mode-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--primary);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.brain-mode-card:active { transform: scale(0.98); }
+.brain-mode-icon { font-size: 28px; flex-shrink: 0; }
+.brain-mode-text { flex: 1; min-width: 0; }
+.brain-mode-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.brain-mode-desc { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.brain-mode-arrow { font-size: 22px; color: var(--text-light); flex-shrink: 0; }
+
+/* ── Instant Page (即時推薦) ──────────────── */
+.instant-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.instant-icon { font-size: 36px; }
+.instant-header h2 { font-size: 20px; margin: 4px 0; }
+.instant-subtitle { font-size: 13px; color: var(--text-light); }
+
+.instant-nl-section {
+  margin-bottom: 16px;
+}
+.instant-nl-wrap {
+  display: flex;
+  gap: 8px;
+}
+.instant-nl-input {
+  flex: 1;
+  height: 44px;
+  border: 2px solid var(--border);
+  border-radius: 22px;
+  padding: 0 16px;
+  font-size: 15px;
+  outline: none;
+  background: var(--card-bg);
+  transition: border-color 0.2s;
+}
+.instant-nl-input:focus { border-color: var(--primary); }
+.instant-nl-btn {
+  height: 44px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 22px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.instant-nl-btn:active { opacity: 0.8; }
+
+.instant-quick-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.instant-quick-tag {
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  background: var(--primary-bg);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.instant-quick-tag:active { background: var(--primary); color: #fff; }
+
+.instant-manual {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.instant-manual-title {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 10px;
+}
+.instant-manual-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.instant-merchant-input {
+  flex: 1;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  font-size: 14px;
+  outline: none;
+}
+.instant-merchant-input:focus { border-color: var(--primary); }
+.instant-amount-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.instant-dollar { font-size: 16px; font-weight: 700; color: var(--text-light); }
+.instant-amount-input {
+  width: 80px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 8px;
+  font-size: 14px;
+  outline: none;
+}
+.instant-amount-input:focus { border-color: var(--primary); }
+.instant-go-btn {
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.instant-go-btn:active { opacity: 0.8; }
+
+/* Instant Results */
+.instant-result-summary {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 12px;
+  text-align: center;
+}
+.instant-best-card {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.3);
+}
+.instant-best-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+.instant-best-reward {
+  font-size: 36px;
+  font-weight: 800;
+  margin: 4px 0;
+}
+.instant-best-rate { font-size: 14px; opacity: 0.9; }
+.instant-best-name { font-size: 16px; font-weight: 600; margin-top: 8px; }
+.instant-best-cap { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+.instant-best-cond { font-size: 12px; opacity: 0.7; }
+.instant-best-mine {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 12px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.instant-others-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+.instant-other-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+}
+.instant-other-card.mine { border-left: 3px solid var(--accent); }
+.instant-other-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+.instant-other-info { flex: 1; min-width: 0; }
+.instant-other-name { font-size: 14px; font-weight: 600; }
+.instant-other-meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.instant-other-reward {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── Regret Page (後悔計算機) ─────────────── */
+.regret-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.regret-icon { font-size: 36px; }
+.regret-header h2 { font-size: 20px; margin: 4px 0; }
+.regret-subtitle { font-size: 13px; color: var(--text-light); }
+
+.regret-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.regret-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  box-shadow: var(--shadow);
+}
+.regret-merchant {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 13px;
+  outline: none;
+}
+.regret-merchant:focus { border-color: var(--primary); }
+.regret-amount-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.regret-dollar { font-size: 14px; font-weight: 700; color: var(--text-light); }
+.regret-amount {
+  width: 64px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 6px;
+  font-size: 13px;
+  outline: none;
+}
+.regret-amount:focus { border-color: var(--primary); }
+.regret-card-select {
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 4px;
+  font-size: 12px;
+  max-width: 110px;
+  outline: none;
+  background: var(--card-bg);
+}
+.regret-remove-btn {
+  font-size: 20px;
+  color: var(--danger);
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.regret-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.regret-add-btn {
+  flex: 1;
+  height: 40px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+}
+.regret-add-btn:active { border-color: var(--primary); color: var(--primary); }
+.regret-calc-btn {
+  flex: 1;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--danger);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.regret-calc-btn:active { opacity: 0.8; }
+
+/* Regret Results */
+.regret-summary {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.regret-summary-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 10px;
+}
+.regret-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.regret-summary-label { font-size: 12px; color: var(--text-light); }
+.regret-summary-value {
+  font-size: 20px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+.regret-summary-value.green { color: var(--accent); }
+.regret-total {
+  text-align: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.regret-total-label {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+.regret-total-value {
+  font-size: 32px;
+  font-weight: 800;
+}
+.regret-total-value.red { color: var(--danger); }
+.regret-total-value.green { color: var(--accent); }
+
+.regret-details-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+.regret-detail-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+}
+.regret-detail-card.has-regret { border-left: 3px solid var(--danger); }
+.regret-detail-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.regret-detail-merchant { font-size: 14px; font-weight: 700; }
+.regret-detail-amount { font-size: 14px; font-weight: 600; color: var(--text-light); }
+.regret-detail-compare {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.regret-detail-your,
+.regret-detail-best { flex: 1; text-align: center; }
+.regret-detail-label { font-size: 11px; color: var(--text-light); }
+.regret-detail-card-name { font-size: 12px; font-weight: 600; margin: 2px 0; }
+.regret-detail-reward { font-size: 16px; font-weight: 800; color: var(--text); }
+.regret-detail-reward.accent { color: var(--accent); }
+.regret-detail-vs {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+.regret-detail-diff {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger);
+}
+.regret-detail-ok {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── Planner Page (行程規劃) ─────────────── */
+.planner-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.planner-icon { font-size: 36px; }
+.planner-header h2 { font-size: 20px; margin: 4px 0; }
+.planner-subtitle { font-size: 13px; color: var(--text-light); }
+
+.planner-nl-section {
+  margin-bottom: 16px;
+}
+.planner-nl-wrap {
+  display: flex;
+  gap: 8px;
+}
+.planner-nl-input {
+  flex: 1;
+  height: 44px;
+  border: 2px solid var(--border);
+  border-radius: 22px;
+  padding: 0 16px;
+  font-size: 15px;
+  outline: none;
+  background: var(--card-bg);
+  transition: border-color 0.2s;
+}
+.planner-nl-input:focus { border-color: var(--primary); }
+.planner-nl-btn {
+  height: 44px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 22px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.planner-nl-btn:active { opacity: 0.8; }
+.planner-quick-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.planner-quick-tag {
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  background: var(--primary-bg);
+  color: var(--primary);
+  cursor: pointer;
+}
+.planner-quick-tag:active { background: var(--primary); color: #fff; }
+
+.planner-manual {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.planner-manual-title {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+.planner-field {
+  margin-bottom: 12px;
+}
+.planner-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.planner-select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  font-size: 14px;
+  outline: none;
+  background: var(--card-bg);
+}
+.planner-budget-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.planner-dollar { font-size: 18px; font-weight: 700; color: var(--text-light); }
+.planner-budget-input {
+  flex: 1;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  outline: none;
+}
+.planner-budget-input:focus { border-color: var(--primary); }
+
+.planner-breakdown {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.planner-breakdown-title {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+.planner-breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.planner-breakdown-row label {
+  width: 70px;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.planner-bd-input {
+  flex: 1;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 13px;
+  outline: none;
+}
+.planner-bd-input:focus { border-color: var(--primary); }
+
+.planner-go-btn {
+  width: 100%;
+  height: 44px;
+  margin-top: 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.planner-go-btn:active { opacity: 0.8; }
+
+/* Planner Results */
+.planner-result-hero {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.3);
+}
+.planner-hero-dest { font-size: 20px; font-weight: 800; }
+.planner-hero-budget { font-size: 14px; opacity: 0.8; margin: 4px 0; }
+.planner-hero-savings {
+  font-size: 16px;
+  margin-top: 8px;
+}
+.planner-hero-savings strong {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.planner-breakdown-title-result {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+.planner-cat-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+}
+.planner-cat-icon { font-size: 24px; flex-shrink: 0; }
+.planner-cat-info { flex: 1; min-width: 0; }
+.planner-cat-label { font-size: 14px; font-weight: 700; }
+.planner-cat-amount { font-size: 12px; color: var(--text-light); }
+.planner-cat-best { font-size: 12px; color: var(--text); margin-top: 2px; }
+.planner-cat-rate { font-size: 12px; color: var(--primary); }
+.planner-cat-savings {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.planner-bring-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: var(--text);
+}
+.planner-bring-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  box-shadow: var(--shadow);
+  border-left: 3px solid var(--primary);
+}
+.planner-bring-name { font-size: 14px; font-weight: 600; }
+.planner-bring-usage { font-size: 12px; color: var(--text-light); }

@@ -13,6 +13,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from pathlib import Path
 
+from fastapi import Request
+
 from database.query import (
     list_all_cards,
     list_categories,
@@ -21,6 +23,13 @@ from database.query import (
     search_merchants,
 )
 from database.merchant_aliases import match_osm_to_merchant
+from brain import (
+    instant_recommend,
+    instant_recommend_by_category,
+    regret_calculate,
+    plan_trip,
+)
+from llm import extract_intent
 
 app = FastAPI(title="CardBrain API")
 
@@ -86,6 +95,72 @@ def api_recommend_category(
 @app.get("/api/merchants/search")
 def api_merchants_search(q: str = Query(..., min_length=1)):
     return search_merchants(q)
+
+
+@app.post("/api/brain")
+async def api_brain(request: Request):
+    """
+    CardBrain 3.0 精算端點。
+    接受 {mode, query, merchant, amount, card_ids, transactions, destination, budget, breakdown}
+    """
+    body = await request.json()
+    mode = body.get("mode")
+    query = body.get("query")
+    card_ids = body.get("card_ids")
+
+    # 若有自然語言 query，先經過意圖萃取
+    if query and not mode:
+        intent = extract_intent(query)
+        # 合併 intent 到 body（body 中已有的欄位優先）
+        for k, v in intent.items():
+            if k not in body or body[k] is None:
+                body[k] = v
+        mode = body.get("mode", "instant")
+
+    if mode == "instant":
+        return _handle_instant(body, card_ids)
+    elif mode == "regret":
+        return _handle_regret(body, card_ids)
+    elif mode == "plan":
+        return _handle_plan(body, card_ids)
+    else:
+        return {"error": "Unknown mode. Use: instant, regret, plan"}
+
+
+def _handle_instant(body: dict, card_ids: list[int] | None) -> dict:
+    merchant = body.get("merchant")
+    amount = body.get("amount", 0)
+    category_id = body.get("category_id")
+
+    if not amount:
+        return {"error": "amount is required for instant mode"}
+
+    if category_id:
+        return instant_recommend_by_category(category_id, float(amount), card_ids)
+    elif merchant:
+        return instant_recommend(merchant, float(amount), card_ids)
+    else:
+        return {"error": "merchant or category_id is required"}
+
+
+def _handle_regret(body: dict, card_ids: list[int] | None) -> dict:
+    transactions = body.get("transactions", [])
+    if not transactions:
+        return {"error": "transactions is required for regret mode"}
+    return regret_calculate(transactions, card_ids)
+
+
+def _handle_plan(body: dict, card_ids: list[int] | None) -> dict:
+    destination = body.get("destination", "")
+    budget = body.get("budget", 0)
+    breakdown = body.get("breakdown")
+
+    if not destination:
+        return {"error": "destination is required for plan mode"}
+    if not budget and not breakdown:
+        return {"error": "budget or breakdown is required for plan mode"}
+
+    return plan_trip(destination, float(budget), breakdown, card_ids)
 
 
 @app.get("/api/nearby")

@@ -103,6 +103,34 @@ async function HomePage() {
       </div>
     </div>
 
+    <!-- CardBrain 3.0 模式入口 -->
+    <div class="brain-modes">
+      <div class="brain-mode-card" data-href="#/instant">
+        <span class="brain-mode-icon">&#9889;</span>
+        <div class="brain-mode-text">
+          <div class="brain-mode-title">即時推薦</div>
+          <div class="brain-mode-desc">輸入商家+金額，算出真實回饋</div>
+        </div>
+        <span class="brain-mode-arrow">&rsaquo;</span>
+      </div>
+      <div class="brain-mode-card" data-href="#/regret">
+        <span class="brain-mode-icon">&#128561;</span>
+        <div class="brain-mode-text">
+          <div class="brain-mode-title">後悔計算機</div>
+          <div class="brain-mode-desc">算算你少賺了多少回饋</div>
+        </div>
+        <span class="brain-mode-arrow">&rsaquo;</span>
+      </div>
+      <div class="brain-mode-card" data-href="#/planner">
+        <span class="brain-mode-icon">&#128506;</span>
+        <div class="brain-mode-text">
+          <div class="brain-mode-title">行程規劃</div>
+          <div class="brain-mode-desc">出國旅遊最佳刷卡攻略</div>
+        </div>
+        <span class="brain-mode-arrow">&rsaquo;</span>
+      </div>
+    </div>
+
     <!-- 搜尋商家 -->
     <div class="search-wrapper">
       <span class="search-icon">🔍</span>
@@ -226,6 +254,13 @@ HomePage.init = () => {
     refreshThumbs();
   });
   bindRemoveButtons();
+
+  // ── Brain 模式入口 ──
+  document.querySelectorAll(".brain-mode-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      location.hash = card.dataset.href;
+    });
+  });
 
   // ── 商家搜尋 ──
   const input = document.getElementById("searchInput");
