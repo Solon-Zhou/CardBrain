@@ -183,7 +183,10 @@ CardsPage.init = () => {
   });
 
   // ── Modal 邏輯 ──
+  let _cardsChanged = false;
+
   function openModal() {
+    _cardsChanged = false;
     modal.classList.add("show");
     cardSearchInput.value = "";
     cardSearchInput.focus();
@@ -192,6 +195,10 @@ CardsPage.init = () => {
 
   function closeModal() {
     modal.classList.remove("show");
+    if (_cardsChanged) {
+      // 強制重新渲染頁面以顯示新卡片
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    }
   }
 
   function renderCardList(query) {
@@ -246,6 +253,7 @@ CardsPage.init = () => {
     const btn = e.target.closest("[data-card-id]");
     if (!btn) return;
     Store.toggleCard(parseInt(btn.dataset.cardId, 10));
+    _cardsChanged = true;
     renderCardList(cardSearchInput.value.trim());
   });
 };
