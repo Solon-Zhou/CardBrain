@@ -46,5 +46,19 @@ const API = (() => {
     return res.json();
   }
 
-  return { getCards, getCategories, recommendByMerchant, recommendByCategory, searchMerchants, brain };
+  async function agent(message) {
+    const payload = {
+      message,
+      card_ids: Store.getMyCards(),
+    };
+    const res = await fetch("/api/agent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+  }
+
+  return { getCards, getCategories, recommendByMerchant, recommendByCategory, searchMerchants, brain, agent };
 })();

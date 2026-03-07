@@ -29,7 +29,7 @@ from brain import (
     regret_calculate,
     plan_trip,
 )
-from llm import extract_intent
+from llm import extract_intent, generate_reply
 
 app = FastAPI(title="CardBrain API")
 
@@ -162,6 +162,41 @@ def _handle_plan(body: dict, card_ids: list[int] | None) -> dict:
         return {"error": "budget or breakdown is required for plan mode"}
 
     return plan_trip(destination, float(budget), breakdown, card_ids)
+
+
+@app.post("/api/agent")
+async def api_agent(request: Request):
+    """
+    CardBrain Agent 端點。
+    接收 { message: "星巴克 300", card_ids: [1,5] }
+    回傳 { reply: "人話回覆", mode: "instant", data: {精算結果} }
+    """
+    body = await request.json()
+    message = body.get("message", "").strip()
+    card_ids = body.get("card_ids")
+
+    if not message:
+        return {"reply": "請輸入你的消費情境，例如「星巴克 300」或「日本旅遊 10萬」", "mode": None, "data": None}
+
+    # 1. 意圖解析
+    intent = extract_intent(message)
+    mode = intent.get("mode", "instant")
+
+    # 2. 呼叫精算引擎
+    brain_input = {**intent, "card_ids": card_ids}
+    if mode == "instant":
+        data = _handle_instant(brain_input, card_ids)
+    elif mode == "regret":
+        data = _handle_regret(brain_input, card_ids)
+    elif mode == "plan":
+        data = _handle_plan(brain_input, card_ids)
+    else:
+        data = {"error": "Unknown mode"}
+
+    # 3. 生成自然語言回覆
+    reply = generate_reply(mode, intent, data)
+
+    return {"reply": reply, "mode": mode, "data": data}
 
 
 @app.get("/api/nearby")

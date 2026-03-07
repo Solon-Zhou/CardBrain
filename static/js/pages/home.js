@@ -1,17 +1,6 @@
 /**
- * home.js — 首頁：我的卡組合 + 搜尋 + 分類（一頁式，仿 iCard.AI）
+ * home.js — 首頁：我的卡組合 + Agent 聊天 + 附近商家地圖
  */
-
-const CAT_EMOJIS = {
-  "常用消費": "🛒",
-  "繳費與保險": "🧾",
-  "百貨購物": "🛍️",
-  "餐飲外送": "🍽️",
-  "通勤交通": "🚗",
-  "娛樂休閒": "🎮",
-  "旅遊住宿": "✈️",
-  "其他": "📦",
-};
 
 const BANK_COLORS = {
   "國泰世華": "#1A6B4B", "中國信託": "#C8102E", "玉山銀行": "#006B3F",
@@ -24,7 +13,6 @@ const BANK_COLORS = {
 };
 
 // cache
-let _categories = null;
 let _allCards = null;
 
 function _buildThumbs(allCards) {
@@ -43,41 +31,10 @@ function _buildThumbs(allCards) {
 }
 
 async function HomePage() {
-  const [categories, allCards] = await Promise.all([
-    _categories || API.getCategories(),
-    _allCards || API.getCards(),
-  ]);
-  _categories = categories;
+  const allCards = await (_allCards || API.getCards());
   _allCards = allCards;
 
-  const myIds = Store.getMyCards();
   const thumbsHtml = _buildThumbs(allCards);
-
-  // category grid
-  const catGridHtml = categories
-    .map(
-      (cat) =>
-        `<div class="cat-card" data-cat-id="${cat.id}">
-          <span class="cat-emoji">${CAT_EMOJIS[cat.name] || "📁"}</span>
-          <span class="cat-name">${cat.name}</span>
-        </div>`
-    )
-    .join("");
-
-  // sub-category sections
-  const subSectionsHtml = categories
-    .map(
-      (cat) =>
-        `<div class="subcat-list" id="subcat-${cat.id}">
-          ${cat.children
-            .map(
-              (sub) =>
-                `<span class="subcat-chip" data-subcat-id="${sub.id}">${sub.name}</span>`
-            )
-            .join("")}
-        </div>`
-    )
-    .join("");
 
   return `
     <!-- 我的卡組合 -->
@@ -90,7 +47,30 @@ async function HomePage() {
       </div>
     </div>
 
-    <!-- 附近商家地圖（永遠顯示，未定位時顯示授權提示） -->
+    <!-- Agent 聊天區 -->
+    <div class="agent-section">
+      <div class="agent-messages" id="agentMessages">
+        <div class="agent-bubble bot">
+          <div class="agent-avatar">🧠</div>
+          <div class="agent-text">嗨！我是 CardBrain Agent，告訴我你的消費情境，我幫你找最划算的卡。<br><br>試試看：「星巴克 300」、「全聯 2000」、「日本旅遊 10萬」</div>
+        </div>
+      </div>
+      <div class="agent-quick-tags" id="agentQuickTags">
+        <span class="agent-tag" data-msg="星巴克 300">☕ 星巴克 300</span>
+        <span class="agent-tag" data-msg="全聯 2000">🛒 全聯 2000</span>
+        <span class="agent-tag" data-msg="日本旅遊 10萬">✈️ 日本 10萬</span>
+        <span class="agent-tag" data-msg="加油 1500">⛽ 加油 1500</span>
+      </div>
+      <div class="agent-input-bar">
+        <input class="agent-input" id="agentInput"
+          type="text" placeholder="輸入消費情境，例如「星巴克 300」" autocomplete="off">
+        <button class="agent-send-btn" id="agentSendBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 附近商家地圖 -->
     <div class="nearby-section" id="nearbySection">
       <div class="nearby-title" id="nearbyTitle">📍 附近商家地圖</div>
       <div class="nearby-map-wrap">
@@ -102,47 +82,6 @@ async function HomePage() {
         </div>
       </div>
     </div>
-
-    <!-- CardBrain 3.0 模式入口 -->
-    <div class="brain-modes">
-      <div class="brain-mode-card" data-href="#/instant">
-        <span class="brain-mode-icon">&#9889;</span>
-        <div class="brain-mode-text">
-          <div class="brain-mode-title">即時推薦</div>
-          <div class="brain-mode-desc">輸入商家+金額，算出真實回饋</div>
-        </div>
-        <span class="brain-mode-arrow">&rsaquo;</span>
-      </div>
-      <div class="brain-mode-card" data-href="#/regret">
-        <span class="brain-mode-icon">&#128561;</span>
-        <div class="brain-mode-text">
-          <div class="brain-mode-title">後悔計算機</div>
-          <div class="brain-mode-desc">算算你少賺了多少回饋</div>
-        </div>
-        <span class="brain-mode-arrow">&rsaquo;</span>
-      </div>
-      <div class="brain-mode-card" data-href="#/planner">
-        <span class="brain-mode-icon">&#128506;</span>
-        <div class="brain-mode-text">
-          <div class="brain-mode-title">行程規劃</div>
-          <div class="brain-mode-desc">出國旅遊最佳刷卡攻略</div>
-        </div>
-        <span class="brain-mode-arrow">&rsaquo;</span>
-      </div>
-    </div>
-
-    <!-- 搜尋商家 -->
-    <div class="search-wrapper">
-      <span class="search-icon">🔍</span>
-      <input class="search-input" id="searchInput"
-        type="text" placeholder="搜尋商家（如：星巴克、全聯）" autocomplete="off">
-      <div class="autocomplete-list" id="acList"></div>
-    </div>
-
-    <!-- 消費分類 -->
-    <div class="section-title">📂 消費分類</div>
-    <div class="cat-grid">${catGridHtml}</div>
-    ${subSectionsHtml}
 
     <!-- 新增卡片 Modal -->
     <div class="modal-overlay" id="addCardModal">
@@ -255,87 +194,94 @@ HomePage.init = () => {
   });
   bindRemoveButtons();
 
-  // ── Brain 模式入口 ──
-  document.querySelectorAll(".brain-mode-card").forEach((card) => {
-    card.addEventListener("click", () => {
-      location.hash = card.dataset.href;
-    });
-  });
+  // ── Agent 聊天 ──
+  const messagesEl = document.getElementById("agentMessages");
+  const agentInput = document.getElementById("agentInput");
+  const sendBtn = document.getElementById("agentSendBtn");
+  const quickTags = document.getElementById("agentQuickTags");
+  let _sending = false;
 
-  // ── 商家搜尋 ──
-  const input = document.getElementById("searchInput");
-  const acList = document.getElementById("acList");
-  let debounceTimer = null;
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
-  input.addEventListener("input", () => {
-    clearTimeout(debounceTimer);
-    const q = input.value.trim();
-    if (!q) { acList.classList.remove("show"); return; }
-    debounceTimer = setTimeout(async () => {
-      try {
-        const results = await API.searchMerchants(q);
-        if (!results.length) {
-          acList.innerHTML = `<div class="autocomplete-item" data-q="${q}">搜尋「${q}」的推薦</div>`;
-        } else {
-          acList.innerHTML = results
-            .map((m) =>
-              `<div class="autocomplete-item" data-merchant="${m.name}">
-                ${m.name}<span class="cat-tag">${m.category_name}</span>
-              </div>`)
-            .join("");
-        }
-        acList.classList.add("show");
-      } catch { acList.classList.remove("show"); }
-    }, 250);
-  });
-
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const q = input.value.trim();
-      if (q) { acList.classList.remove("show"); location.hash = `#/result?type=merchant&q=${encodeURIComponent(q)}`; }
+  function addBubble(role, text) {
+    const bubble = document.createElement("div");
+    bubble.className = `agent-bubble ${role}`;
+    if (role === "bot") {
+      bubble.innerHTML = `<div class="agent-avatar">🧠</div><div class="agent-text">${text}</div>`;
+    } else {
+      bubble.innerHTML = `<div class="agent-text">${escapeHtml(text)}</div>`;
     }
-  });
+    messagesEl.appendChild(bubble);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
 
-  acList.addEventListener("click", (e) => {
-    const item = e.target.closest(".autocomplete-item");
-    if (!item) return;
-    const merchant = item.dataset.merchant || item.dataset.q;
-    acList.classList.remove("show");
-    input.value = merchant;
-    location.hash = `#/result?type=merchant&q=${encodeURIComponent(merchant)}`;
-  });
+  function addTyping() {
+    const bubble = document.createElement("div");
+    bubble.className = "agent-bubble bot";
+    bubble.id = "agentTyping";
+    bubble.innerHTML = `<div class="agent-avatar">🧠</div><div class="agent-text agent-typing"><span></span><span></span><span></span></div>`;
+    messagesEl.appendChild(bubble);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
 
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".search-wrapper")) acList.classList.remove("show");
-  });
+  function removeTyping() {
+    const el = document.getElementById("agentTyping");
+    if (el) el.remove();
+  }
 
-  // ── 分類 ──
-  let openCatId = null;
-  document.querySelectorAll(".cat-card").forEach((card) => {
-    card.addEventListener("click", () => {
-      const catId = card.dataset.catId;
-      if (openCatId && openCatId !== catId) {
-        const prev = document.getElementById(`subcat-${openCatId}`);
-        if (prev) prev.classList.remove("show");
+  function formatReply(text) {
+    return escapeHtml(text).replace(/\n/g, "<br>");
+  }
+
+  async function sendMessage(text) {
+    if (_sending || !text.trim()) return;
+    _sending = true;
+    agentInput.value = "";
+    sendBtn.disabled = true;
+
+    // 隱藏快捷標籤
+    quickTags.style.display = "none";
+
+    addBubble("user", text);
+    addTyping();
+
+    try {
+      const res = await API.agent(text);
+      removeTyping();
+      const replyHtml = formatReply(res.reply || "抱歉，我無法理解你的問題。");
+
+      // 若有結構化數據，附加精算卡片
+      let extraHtml = "";
+      if (res.data && !res.data.error) {
+        extraHtml = _buildDataCard(res.mode, res.data);
       }
-      const subList = document.getElementById(`subcat-${catId}`);
-      if (subList) {
-        subList.classList.toggle("show");
-        openCatId = subList.classList.contains("show") ? catId : null;
-      }
-    });
-  });
 
-  document.querySelectorAll(".subcat-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      const subcatId = chip.dataset.subcatId;
-      const name = chip.textContent.trim();
-      location.hash = `#/result?type=category&category_id=${subcatId}&name=${encodeURIComponent(name)}`;
-    });
+      addBubble("bot", replyHtml + extraHtml);
+    } catch (err) {
+      removeTyping();
+      addBubble("bot", "抱歉，發生了一點問題，請稍後再試。");
+    }
+
+    _sending = false;
+    sendBtn.disabled = false;
+    agentInput.focus();
+  }
+
+  agentInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage(agentInput.value);
+  });
+  sendBtn.addEventListener("click", () => sendMessage(agentInput.value));
+  quickTags.addEventListener("click", (e) => {
+    const tag = e.target.closest(".agent-tag");
+    if (tag) sendMessage(tag.dataset.msg);
   });
 
   // ── 附近商家地圖（Geofencing + Leaflet）──
-  const nearbySection = document.getElementById("nearbySection");
   const permissionEl = document.getElementById("nearbyPermission");
   const mapEl = document.getElementById("nearbyMap");
   const titleEl = document.getElementById("nearbyTitle");
@@ -375,7 +321,6 @@ HomePage.init = () => {
       ? `📍 偵測到 ${nearby.length} 間附近商家`
       : `📍 你的位置${accText}（附近暫無合作商家）`;
 
-    // 初始化或重置地圖
     if (!_nearbyMap) {
       _nearbyMap = L.map("nearbyMap", {
         zoomControl: false,
@@ -392,7 +337,6 @@ HomePage.init = () => {
       _mapLayerGroup.clearLayers();
     }
 
-    // 使用者位置 — 精度圈 + 藍色圓點
     if (accuracy) {
       const accCircle = L.circle([userLat, userLng], {
         radius: accuracy,
@@ -414,7 +358,6 @@ HomePage.init = () => {
 
     const bounds = L.latLngBounds([[userLat, userLng]]);
 
-    // 商家標記
     nearby.forEach((item) => {
       if (!item.lat || !item.lng) return;
       const emoji = _getEmoji(item.category_name);
@@ -442,7 +385,6 @@ HomePage.init = () => {
       bounds.extend([item.lat, item.lng]);
     });
 
-    // 自動 fit bounds
     if (nearby.length) {
       _nearbyMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
     } else {
@@ -451,7 +393,6 @@ HomePage.init = () => {
 
     setTimeout(() => _nearbyMap.invalidateSize(), 100);
 
-    // 推播通知（只通知第一個）
     if (nearby.length && typeof Notify !== "undefined") {
       Notify.requestPermission().then(() => {
         Notify.notifyNearby(nearby[0]);
@@ -465,9 +406,7 @@ HomePage.init = () => {
     }
   }
 
-  // 檢查定位權限狀態，決定顯示地圖或授權提示
   if (!("geolocation" in navigator)) {
-    // 瀏覽器不支援定位
     permissionEl.querySelector(".nearby-permission-text").textContent = "您的瀏覽器不支援定位功能";
     permissionEl.querySelector(".nearby-permission-btn").style.display = "none";
     _showPermissionPrompt();
@@ -477,7 +416,6 @@ HomePage.init = () => {
         _hidePermissionPrompt();
         _startGeo();
       } else {
-        // prompt 或 denied — 先顯示授權提示
         _showPermissionPrompt();
         if (result.state === "denied") {
           permissionEl.querySelector(".nearby-permission-text").textContent = "定位權限已被封鎖，請至瀏覽器設定中開啟";
@@ -487,13 +425,83 @@ HomePage.init = () => {
       }
     });
   } else {
-    // 無法查詢權限（Safari 等），直接顯示授權按鈕
     _showPermissionPrompt();
   }
 
-  // 「開啟定位」按鈕
   document.getElementById("btnGrantLocation").addEventListener("click", () => {
     titleEl.textContent = "📍 定位中...";
     _startGeo();
   });
 };
+
+// ── 精算結果卡片渲染 ──
+function _buildDataCard(mode, data) {
+  if (mode === "instant") return _buildInstantCard(data);
+  if (mode === "plan") return _buildPlanCard(data);
+  if (mode === "regret") return _buildRegretCard(data);
+  return "";
+}
+
+function _buildInstantCard(data) {
+  const results = data.results || [];
+  if (!results.length) return "";
+  const best = results[0];
+  const rtype = best.reward_type || "cashback";
+  const unit = rtype === "cashback" ? "回饋" : (rtype === "miles" ? "哩程" : "點");
+
+  let html = `<div class="agent-data-card">`;
+  html += `<div class="agent-data-best">
+    <div class="agent-data-best-label">最佳推薦</div>
+    <div class="agent-data-best-name">${best.bank_name} ${best.card_name}</div>
+    <div class="agent-data-best-reward">$${(best.actual_reward || 0).toFixed(1)} <small>${unit}</small></div>
+    <div class="agent-data-best-rate">${best.reward_rate}%</div>
+  </div>`;
+
+  if (results.length > 1) {
+    html += `<div class="agent-data-others">`;
+    results.slice(1, 4).forEach((r, i) => {
+      html += `<div class="agent-data-other">
+        <span class="agent-data-rank">#${i + 2}</span>
+        <span class="agent-data-other-name">${r.bank_name} ${r.card_name}</span>
+        <span class="agent-data-other-reward">$${(r.actual_reward || 0).toFixed(1)}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function _buildPlanCard(data) {
+  const cards = data.cards_to_bring || [];
+  const savings = data.total_savings || 0;
+  let html = `<div class="agent-data-card">`;
+  html += `<div class="agent-data-plan-hero">
+    <span>預估省下</span>
+    <strong>$${savings.toFixed(0)}</strong>
+  </div>`;
+  if (cards.length) {
+    html += `<div class="agent-data-bring">帶卡清單：`;
+    cards.forEach((c) => {
+      const usage = (c.usage || []).join("、");
+      html += `<div class="agent-data-bring-item">${c.card} → ${usage}</div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function _buildRegretCard(data) {
+  const regret = data.total_regret || 0;
+  const yourReward = data.total_your_reward || 0;
+  const bestReward = data.total_best_reward || 0;
+  let html = `<div class="agent-data-card">`;
+  html += `<div class="agent-data-regret-summary">
+    <div><span>你的回饋</span><strong>$${yourReward.toFixed(1)}</strong></div>
+    <div><span>最佳回饋</span><strong class="green">$${bestReward.toFixed(1)}</strong></div>
+    <div><span>少賺</span><strong class="red">$${regret.toFixed(1)}</strong></div>
+  </div>`;
+  html += `</div>`;
+  return html;
+}
