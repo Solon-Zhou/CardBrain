@@ -21,6 +21,7 @@ from database.query import (
     recommend_by_merchant,
     recommend_by_category_id,
     search_merchants,
+    get_card_rewards,
 )
 from database.merchant_aliases import match_osm_to_merchant
 from brain import (
@@ -90,6 +91,12 @@ def api_recommend_category(
 ):
     ids = _parse_ids(card_ids)
     return recommend_by_category_id(category_id, ids or None)
+
+
+@app.get("/api/cards/{card_id}/rewards")
+def api_card_rewards(card_id: int):
+    """取得某張卡的所有回饋規則"""
+    return get_card_rewards(card_id)
 
 
 @app.get("/api/merchants/search")

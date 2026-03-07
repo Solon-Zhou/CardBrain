@@ -1,5 +1,5 @@
 /**
- * cards.js — 卡片管理頁面
+ * cards.js — 卡片管理頁面：展示每張卡的回饋優惠
  */
 
 const BANK_COLORS = {
@@ -12,41 +12,60 @@ const BANK_COLORS = {
   "台灣企銀": "#004B87",
 };
 
-let _allCards = null;
+const REWARD_TYPE_LABEL = {
+  cashback: "現金回饋",
+  points: "點數",
+  miles: "哩程",
+};
 
-function _buildThumbs(allCards) {
-  const myIds = Store.getMyCards();
-  const myCards = allCards.filter((c) => myIds.includes(c.id));
-  return myCards
-    .map((c) => {
-      const color = BANK_COLORS[c.bank_name] || "#555";
-      return `<div class="card-thumb" data-id="${c.id}" style="background:${color}">
-        <span class="card-thumb-x" data-remove="${c.id}">&times;</span>
-        <span class="card-thumb-bank">${c.bank_name}</span>
-        <span class="card-thumb-name">${c.card_name}</span>
-      </div>`;
-    })
-    .join("");
-}
+let _allCards = null;
 
 async function CardsPage() {
   const allCards = await (_allCards || API.getCards());
   _allCards = allCards;
 
-  const thumbsHtml = _buildThumbs(allCards);
-  const myCount = Store.getMyCards().length;
+  const myIds = Store.getMyCards();
+  const myCards = allCards.filter((c) => myIds.includes(c.id));
+
+  let cardsHtml = "";
+  if (myCards.length) {
+    myCards.forEach((c) => {
+      const color = BANK_COLORS[c.bank_name] || "#555";
+      const feeText = c.annual_fee ? `年費 $${c.annual_fee}` : "免年費";
+      cardsHtml += `
+        <div class="cd-card" data-card-id="${c.id}">
+          <div class="cd-card-header" style="background:${color}">
+            <div class="cd-card-info">
+              <div class="cd-card-bank">${c.bank_name}</div>
+              <div class="cd-card-name">${c.card_name}</div>
+              <div class="cd-card-fee">${feeText}</div>
+            </div>
+            <div class="cd-card-actions">
+              <span class="cd-card-expand">▼</span>
+              <span class="cd-card-remove" data-remove="${c.id}">&times;</span>
+            </div>
+          </div>
+          ${c.note ? `<div class="cd-card-note">${c.note}</div>` : ""}
+          <div class="cd-card-rewards" id="rewards-${c.id}">
+            <div class="cd-loading">載入優惠中...</div>
+          </div>
+        </div>`;
+    });
+  } else {
+    cardsHtml = `<div class="cd-empty">
+      <div class="cd-empty-icon">💳</div>
+      <div class="cd-empty-text">還沒有卡片</div>
+      <div class="cd-empty-hint">點擊下方按鈕新增你的信用卡，查看各分類的回饋優惠</div>
+    </div>`;
+  }
 
   return `
     <div class="cards-page">
       <div class="page-title">💳 我的卡片</div>
-      <div class="mycard-desc">管理你的信用卡組合，點擊 + 新增，點擊 × 移除</div>
-
-      <div class="mycard-thumbs" id="cardThumbs">
-        ${thumbsHtml}
-        <div class="card-thumb-add" id="btnAddCard"><span>+</span></div>
-      </div>
-
-      ${myCount === 0 ? '<div class="cards-empty-hint">還沒有卡片，點擊 + 開始新增吧！</div>' : ''}
+      <div class="cd-card-list">${cardsHtml}</div>
+      <button class="cd-add-btn" id="btnAddCard">
+        <span class="cd-add-icon">+</span> 新增卡片
+      </button>
     </div>
 
     <!-- 新增卡片 Modal -->
@@ -54,7 +73,7 @@ async function CardsPage() {
       <div class="modal-content">
         <div class="modal-header">
           <span class="modal-close" id="modalClose">&times;</span>
-          <span class="modal-title">請輸入信用卡資訊</span>
+          <span class="modal-title">新增信用卡</span>
         </div>
         <div class="modal-search">
           <input class="modal-search-input" id="cardSearchInput"
@@ -71,26 +90,99 @@ CardsPage.init = () => {
   const modal = document.getElementById("addCardModal");
   const cardSearchInput = document.getElementById("cardSearchInput");
   const listEl = document.getElementById("cardSearchList");
-  const thumbsEl = document.getElementById("cardThumbs");
+  const cardListEl = document.querySelector(".cd-card-list");
 
-  function refreshThumbs() {
-    const html = _buildThumbs(_allCards);
-    thumbsEl.innerHTML =
-      html + `<div class="card-thumb-add" id="btnAddCard"><span>+</span></div>`;
-    document.getElementById("btnAddCard").addEventListener("click", openModal);
-    bindRemoveButtons();
+  // ── 載入每張卡的回饋明細 ──
+  const myIds = Store.getMyCards();
+  const _rewardsCache = {};
+
+  async function loadCardRewards(cardId) {
+    if (_rewardsCache[cardId]) return _rewardsCache[cardId];
+    const rewards = await API.getCardRewards(cardId);
+    _rewardsCache[cardId] = rewards;
+    return rewards;
   }
 
-  function bindRemoveButtons() {
-    thumbsEl.querySelectorAll("[data-remove]").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        Store.toggleCard(parseInt(btn.dataset.remove, 10));
-        refreshThumbs();
-      });
+  function renderRewards(cardId, rewards) {
+    const container = document.getElementById(`rewards-${cardId}`);
+    if (!container) return;
+
+    if (!rewards.length) {
+      container.innerHTML = '<div class="cd-no-rewards">暫無回饋資料</div>';
+      return;
+    }
+
+    // 按父分類分組
+    const groups = {};
+    rewards.forEach((r) => {
+      const groupName = r.parent_name || r.category_name;
+      if (!groups[groupName]) groups[groupName] = [];
+      groups[groupName].push(r);
     });
+
+    let html = "";
+    Object.entries(groups).forEach(([groupName, items]) => {
+      html += `<div class="cd-reward-group">`;
+      html += `<div class="cd-reward-group-name">${groupName}</div>`;
+      items.forEach((r) => {
+        const typeLabel = REWARD_TYPE_LABEL[r.reward_type] || r.reward_type;
+        const capHtml = r.reward_cap
+          ? `<span class="cd-reward-cap">上限 $${r.reward_cap}/月</span>`
+          : "";
+        const condHtml = r.conditions
+          ? `<span class="cd-reward-cond">${r.conditions}</span>`
+          : "";
+        const rateClass = r.reward_rate >= 3 ? "high" : r.reward_rate >= 1.5 ? "mid" : "";
+
+        html += `
+          <div class="cd-reward-row">
+            <div class="cd-reward-cat">${r.category_name !== groupName ? r.category_name : ""}</div>
+            <div class="cd-reward-detail">
+              <span class="cd-reward-rate ${rateClass}">${r.reward_rate}%</span>
+              <span class="cd-reward-type">${typeLabel}</span>
+              ${capHtml}${condHtml}
+            </div>
+          </div>`;
+      });
+      html += `</div>`;
+    });
+
+    container.innerHTML = html;
   }
 
+  // 預先載入所有卡的回饋
+  myIds.forEach(async (id) => {
+    try {
+      const rewards = await loadCardRewards(id);
+      renderRewards(id, rewards);
+    } catch (e) {
+      const c = document.getElementById(`rewards-${id}`);
+      if (c) c.innerHTML = '<div class="cd-no-rewards">載入失敗</div>';
+    }
+  });
+
+  // ── 展開/收合 ──
+  cardListEl.addEventListener("click", (e) => {
+    const header = e.target.closest(".cd-card-header");
+    if (!header) return;
+    // 不要在點擊刪除按鈕時觸發展開
+    if (e.target.closest(".cd-card-remove")) return;
+    const card = header.closest(".cd-card");
+    card.classList.toggle("expanded");
+  });
+
+  // ── 移除卡片 ──
+  cardListEl.addEventListener("click", (e) => {
+    const removeBtn = e.target.closest(".cd-card-remove");
+    if (!removeBtn) return;
+    e.stopPropagation();
+    const cardId = parseInt(removeBtn.dataset.remove, 10);
+    Store.toggleCard(cardId);
+    // 重新渲染整頁
+    location.hash = "#/cards";
+  });
+
+  // ── Modal 邏輯 ──
   function openModal() {
     modal.classList.add("show");
     cardSearchInput.value = "";
@@ -103,7 +195,7 @@ CardsPage.init = () => {
   }
 
   function renderCardList(query) {
-    const myIds = Store.getMyCards();
+    const currentIds = Store.getMyCards();
     const q = query.toLowerCase();
     const filtered = _allCards.filter(
       (c) =>
@@ -120,7 +212,7 @@ CardsPage.init = () => {
     let html = "";
     Object.entries(groups).forEach(([bank, bankCards]) => {
       bankCards.forEach((c) => {
-        const isAdded = myIds.includes(c.id);
+        const isAdded = currentIds.includes(c.id);
         const color = BANK_COLORS[bank] || "#555";
         html += `
           <div class="modal-card-item">
@@ -155,7 +247,5 @@ CardsPage.init = () => {
     if (!btn) return;
     Store.toggleCard(parseInt(btn.dataset.cardId, 10));
     renderCardList(cardSearchInput.value.trim());
-    refreshThumbs();
   });
-  bindRemoveButtons();
 };

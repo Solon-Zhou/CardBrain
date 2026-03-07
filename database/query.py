@@ -158,6 +158,31 @@ def recommend_by_category_id(category_id: int, user_card_ids: list[int] | None =
     return results
 
 
+def get_card_rewards(card_id: int):
+    """列出某張卡的所有回饋規則，按回饋率排序"""
+    conn = get_conn()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT
+            r.reward_type,
+            r.reward_rate,
+            r.reward_cap,
+            r.conditions,
+            cat.id AS category_id,
+            cat.name AS category_name,
+            cat.parent_id,
+            pcat.name AS parent_name
+        FROM rewards r
+        JOIN categories cat ON r.category_id = cat.id
+        LEFT JOIN categories pcat ON cat.parent_id = pcat.id
+        WHERE r.card_id = ?
+        ORDER BY r.reward_rate DESC
+    """, (card_id,))
+    results = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return results
+
+
 def search_merchants(q: str):
     """商家名稱模糊搜尋（autocomplete 用）"""
     conn = get_conn()

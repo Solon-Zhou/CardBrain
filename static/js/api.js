@@ -60,5 +60,9 @@ const API = (() => {
     return res.json();
   }
 
-  return { getCards, getCategories, recommendByMerchant, recommendByCategory, searchMerchants, brain, agent };
+  function getCardRewards(cardId) {
+    return fetchJSON(`/api/cards/${cardId}/rewards`);
+  }
+
+  return { getCards, getCategories, recommendByMerchant, recommendByCategory, searchMerchants, brain, agent, getCardRewards };
 })();

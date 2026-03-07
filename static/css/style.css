@@ -147,11 +147,176 @@ body {
 
 /* ── Cards Page ───────────────────────────── */
 .cards-page { }
-.cards-empty-hint {
-  text-align: center;
-  padding: 32px 0;
-  color: var(--text-light);
+.cd-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cd-card {
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: var(--card-bg);
+}
+.cd-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  color: #fff;
+  cursor: pointer;
+  min-height: 72px;
+  transition: opacity 0.15s;
+}
+.cd-card-header:active { opacity: 0.9; }
+.cd-card-info { flex: 1; min-width: 0; }
+.cd-card-bank { font-size: 11px; opacity: 0.8; }
+.cd-card-name { font-size: 16px; font-weight: 700; margin: 2px 0; }
+.cd-card-fee { font-size: 11px; opacity: 0.7; }
+.cd-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.cd-card-expand {
   font-size: 14px;
+  transition: transform 0.25s;
+  opacity: 0.7;
+}
+.cd-card.expanded .cd-card-expand {
+  transform: rotate(180deg);
+}
+.cd-card-remove {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.7;
+  cursor: pointer;
+}
+.cd-card-remove:active { opacity: 1; }
+.cd-card-note {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text-light);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+/* rewards area — hidden by default */
+.cd-card-rewards {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.cd-card.expanded .cd-card-rewards {
+  max-height: 2000px;
+}
+.cd-loading {
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.cd-no-rewards {
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-light);
+}
+/* reward groups */
+.cd-reward-group {
+  border-top: 1px solid var(--border);
+}
+.cd-reward-group-name {
+  padding: 8px 16px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-bg);
+}
+.cd-reward-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 8px;
+}
+.cd-reward-row:last-child { border-bottom: none; }
+.cd-reward-cat {
+  font-size: 13px;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+.cd-reward-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.cd-reward-rate {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+.cd-reward-rate.high {
+  color: var(--accent);
+}
+.cd-reward-rate.mid {
+  color: var(--primary);
+}
+.cd-reward-type {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #eee;
+  color: var(--text-light);
+}
+.cd-reward-cap {
+  font-size: 11px;
+  color: var(--danger);
+}
+.cd-reward-cond {
+  font-size: 11px;
+  color: var(--text-light);
+  font-style: italic;
+}
+/* empty state */
+.cd-empty {
+  text-align: center;
+  padding: 48px 20px;
+}
+.cd-empty-icon { font-size: 48px; margin-bottom: 12px; }
+.cd-empty-text { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.cd-empty-hint { font-size: 13px; color: var(--text-light); line-height: 1.5; }
+/* add button */
+.cd-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cd-add-btn:active {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.cd-add-icon {
+  font-size: 22px;
+  font-weight: 400;
 }
 
 /* ── Nearby Page ──────────────────────────── */
