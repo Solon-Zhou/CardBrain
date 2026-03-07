@@ -802,9 +802,12 @@ body {
   gap: 8px;
   align-items: center;
   padding: 8px 0 0;
+  min-width: 0;
 }
 .agent-input {
   flex: 1;
+  min-width: 0;
+  width: 0;
   height: 44px;
   border: 2px solid var(--border);
   border-radius: 22px;

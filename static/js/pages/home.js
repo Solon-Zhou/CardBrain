@@ -273,7 +273,10 @@ HomePage.init = () => {
   }
 
   agentInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendMessage(agentInput.value);
+    if (e.key === "Enter" && !e.isComposing) {
+      e.preventDefault();
+      sendMessage(agentInput.value);
+    }
   });
   sendBtn.addEventListener("click", () => sendMessage(agentInput.value));
   quickTags.addEventListener("click", (e) => {
