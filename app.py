@@ -108,14 +108,15 @@ async def api_brain(request: Request):
     query = body.get("query")
     card_ids = body.get("card_ids")
 
-    # 若有自然語言 query，先經過意圖萃取
-    if query and not mode:
+    # 若有自然語言 query，經過意圖萃取補齊 merchant/amount 等欄位
+    if query:
         intent = extract_intent(query)
         # 合併 intent 到 body（body 中已有的欄位優先）
         for k, v in intent.items():
             if k not in body or body[k] is None:
                 body[k] = v
-        mode = body.get("mode", "instant")
+        if not mode:
+            mode = body.get("mode", "instant")
 
     if mode == "instant":
         return _handle_instant(body, card_ids)
