@@ -2,21 +2,21 @@
 
 > **JetThAI Hackathon | 第一隊 #1 — 卡比獸**
 >
-> 選好你的卡，搜商家或選分類，秒看最佳刷卡推薦。走到商家附近自動推薦最佳刷卡！
+> AI Agent 幫你秒算最佳刷卡推薦。走到商家附近自動推薦最佳刷卡！
 
 ## 產品概述
 
-**CardBrain** 是一個 PWA 前端應用，讓使用者選擇自己擁有的信用卡，搜尋商家或瀏覽分類取得最佳刷卡推薦。
+**CardBrain** 是一個 PWA 應用，透過 AI Agent 聊天介面，使用者只要描述消費情境，就能自動取得最佳刷卡建議。
 
 ### 核心功能
 
-- **我的卡組合** — 搜尋銀行/卡名，一鍵新增/移除
-- **商家搜尋** — 輸入商家名稱，即時 autocomplete，查看推薦卡片
-- **分類瀏覽** — 8 大消費分類 + 34 子分類，點選查看回饋排行
-- **智慧推薦** — 區分「我有的卡」vs「其他推薦」，有卡優先顯示
-- **回饋計算機** — 輸入消費金額，即時算出每張卡的回饋金額（含月上限警示）
-- **Fallback 機制** — 無回饋規則的商家自動回退到「國內一般消費」分類
-- **Geofencing 互動地圖** — Leaflet + OpenStreetMap 互動地圖，偵測附近 500m 商家以 emoji 標記顯示，點擊 popup 查看最佳刷卡推薦，推播通知
+| 功能 | 說明 |
+|------|------|
+| **AI 助理** | 輸入「星巴克 300」「日本旅遊 10萬」，Agent 自動判斷意圖、精算回饋、用人話回覆 |
+| **我的卡片** | 管理卡組合，每張卡可展開查看各分類回饋優惠（回饋率/類型/上限/條件） |
+| **附近商家** | Leaflet 地圖偵測 500m 內商家，顯示最佳刷卡推薦 |
+| **精算引擎** | 三種模式 — 即時推薦(instant)、後悔計算機(regret)、行程規劃(plan) |
+| **智慧回退** | 無 LLM API key 時自動 fallback 模板式回覆 |
 
 ---
 
@@ -27,32 +27,120 @@ FastAPI 單一容器（API + 靜態前端）
 部署於 Zeabur，Dockerfile 自動建置
 
 card/
-├── app.py                    # FastAPI 入口（API + SPA fallback）
-├── requirements.txt          # fastapi, uvicorn
-├── Dockerfile                # Zeabur 部署用
+├── app.py                    # FastAPI 入口（9 個 API + SPA fallback）
+├── brain.py                  # 精算引擎（instant / regret / plan）
+├── llm.py                    # LLM 層（意圖解析 + 自然語言回覆）
+├── requirements.txt
+├── Dockerfile
+│
 ├── database/
-│   ├── __init__.py
-│   ├── init_db.py            # SQLite schema
-│   ├── seed_data.py          # 種子資料（19 銀行 / 43 卡 / 133 回饋規則 / 46 商家）
-│   ├── query.py              # 查詢引擎（商家推薦、分類推薦、搜尋）
-│   ├── merchant_aliases.py   # OSM 商家名稱對照表（Geofencing 用）
-│   └── cards.db              # SQLite（.gitignore，Docker build 時重建）
+│   ├── init_db.py            # SQLite schema（5 張表）
+│   ├── seed_data.py          # 種子資料
+│   ├── query.py              # 查詢引擎（8 個查詢函式）
+│   ├── merchant_aliases.py   # OSM 商家名稱對照
+│   └── cards.db              # SQLite（Docker build 時重建）
+│
 ├── templates/
-│   └── index.html            # SPA shell
+│   └── index.html            # SPA shell（漢堡選單 + 側邊導覽）
+│
 └── static/
     ├── manifest.json          # PWA
-    ├── sw.js                  # Service Worker（network-first）
-    ├── css/style.css          # Mobile-first CSS, max-width 480px
+    ├── sw.js                  # Service Worker v32（network-first）
+    ├── css/style.css          # Mobile-first CSS（~1200 行）
     └── js/
-        ├── app.js             # SPA hash router
-        ├── api.js             # API 呼叫封裝
+        ├── app.js             # SPA hash router + 漢堡選單邏輯
+        ├── api.js             # API 呼叫封裝（9 個函式）
         ├── store.js           # localStorage 卡片管理
-        ├── geo.js             # 瀏覽器 Geolocation 封裝（Geofencing）
+        ├── geo.js             # Geolocation 封裝
         ├── notify.js          # Notification API 封裝
         └── pages/
-            ├── home.js        # 首頁：卡片管理 + 搜尋 + 分類 + 附近商家
-            └── result.js      # 結果頁：推薦排序列表
+            ├── home.js        # AI 助理（Agent 聊天 UI）
+            ├── cards.js       # 我的卡片（可展開回饋明細）
+            ├── nearby.js      # 附近商家（Leaflet 地圖）
+            └── result.js      # 查詢結果頁
 ```
+
+---
+
+## 後端架構
+
+### 核心資料流
+
+```
+使用者訊息 "星巴克 300"
+    ↓
+POST /api/agent
+    ↓
+llm.extract_intent()      →  { mode: "instant", merchant: "星巴克", amount: 300 }
+    ↓
+brain.instant_recommend()  →  { results: [{ card, rate, reward }...] }
+    ↓
+llm.generate_reply()       →  "刷國泰 CUBE 卡可獲得 9.9 小樹點..."
+    ↓
+回傳 { reply, mode, data }
+```
+
+**核心原則**：LLM 負責聽懂 + 包裝人話，精算引擎負責算錢 — LLM 不做數學。
+
+### 精算引擎 (brain.py)
+
+| 模式 | 輸入 | 輸出 |
+|------|------|------|
+| **instant** | 商家 + 金額 | 各卡回饋排名 + 實際回饋金額 |
+| **regret** | 消費紀錄 | 你的回饋 vs 最佳回饋 vs 少賺多少 |
+| **plan** | 目的地 + 預算 | 各類別最佳卡 + 帶卡清單 + 預估省下 |
+
+### LLM 層 (llm.py)
+
+| 函式 | 功能 |
+|------|------|
+| `extract_intent()` | NLU 意圖解析（Gemini/OpenAI/Anthropic，含 regex fallback） |
+| `generate_reply()` | 把精算結果包裝成自然語言回覆 |
+| `_template_reply()` | 無 API key 時的模板式 fallback |
+
+---
+
+## 前端架構
+
+### 頁面導覽
+
+```
+index.html
+  ├── 漢堡選單 ☰ → 側邊導覽 (sidenav)
+  │     ├── 💬 AI 助理    → #/
+  │     ├── 💳 我的卡片   → #/cards
+  │     └── 📍 附近商家   → #/nearby
+  │
+  ├── #/         → home.js     AI Agent 聊天介面
+  ├── #/cards    → cards.js    卡片管理 + 可展開回饋明細
+  ├── #/nearby   → nearby.js   Leaflet 互動地圖
+  └── #/result   → result.js   商家/分類推薦結果
+```
+
+### 頁面開發模式
+
+每個頁面遵循相同結構：
+
+```javascript
+async function PageName(params) {
+  const data = await API.getData();  // 非同步取得資料
+  return `<div>...</div>`;           // 回傳 HTML 字串
+}
+
+PageName.init = (params) => {
+  // DOM ready 後綁定事件
+};
+```
+
+### CSS 命名空間
+
+| 前綴 | 用途 |
+|------|------|
+| `.agent-*` | Agent 聊天 UI |
+| `.cd-*` | 卡片管理（card detail） |
+| `.nearby-*` | 附近商家地圖 |
+| `.sidenav-*` | 漢堡選單 / 側邊導覽 |
+| `.modal-*` | 新增卡片 Modal |
 
 ---
 
@@ -60,22 +148,34 @@ card/
 
 | Method | Path | 說明 |
 |--------|------|------|
-| GET | `/api/cards` | 全部 43 張信用卡 |
+| GET | `/api/cards` | 全部信用卡清單 |
+| GET | `/api/cards/{id}/rewards` | 某張卡的全部回饋規則 |
 | GET | `/api/categories` | 巢狀分類結構 |
 | GET | `/api/recommend/merchant?q=星巴克&card_ids=1,5` | 商家推薦 |
 | GET | `/api/recommend/category?category_id=23&card_ids=1,5` | 分類推薦 |
 | GET | `/api/merchants/search?q=星` | 商家 autocomplete |
-| GET | `/api/nearby?lat=25.03&lng=121.56&card_ids=1,5` | Geofencing 附近商家推薦 |
-| GET | `/*` | SPA fallback (index.html) |
+| POST | `/api/brain` | 精算引擎（instant/regret/plan） |
+| POST | `/api/agent` | AI Agent（NLU + 精算 + 回覆） |
+| GET | `/api/nearby?lat=25.03&lng=121.56&card_ids=1,5` | 附近商家推薦 |
 
 ---
 
 ## 資料庫
 
+### Schema
+
 ```
-banks (19)  → cards (43)  → rewards (133)  → categories (42)
-                                              merchants (46)
+banks (19)      → cards (43)     → rewards (170+)    → categories (42)
+                                                        merchants (46)
 ```
+
+| 表 | 欄位 | 說明 |
+|----|------|------|
+| `banks` | id, name, logo_url | 19 家銀行 |
+| `cards` | id, bank_id, card_name, annual_fee, note | 43 張信用卡 |
+| `categories` | id, parent_id, name, icon | 8 主分類 + 34 子分類（樹狀） |
+| `rewards` | id, card_id, category_id, reward_type, reward_rate, reward_cap, conditions | 170+ 筆回饋規則 |
+| `merchants` | id, name, category_id, lat, lng | 46 家常見商家 |
 
 ### 資料關係
 
@@ -98,6 +198,11 @@ python -m database.seed_data
 
 # 啟動開發伺服器
 uvicorn app:app --reload
+
+# 測試 Agent
+curl -X POST http://localhost:8000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{"message":"星巴克 300","card_ids":[1,5]}'
 ```
 
 瀏覽器開啟 `http://localhost:8000`
@@ -109,6 +214,13 @@ docker build -t cardbrain .
 docker run -p 8000:8000 cardbrain
 ```
 
+### 環境變數（選用）
+
+```
+LLM_PROVIDER=gemini        # gemini / openai / anthropic
+LLM_API_KEY=your-key-here  # 無 key 則自動 fallback 模板回覆
+```
+
 ---
 
 ## 技術棧
@@ -116,61 +228,13 @@ docker run -p 8000:8000 cardbrain
 | 層 | 技術 |
 |----|------|
 | 後端 | Python / FastAPI / SQLite |
+| 精算引擎 | brain.py（純 Python 計算） |
+| LLM | Gemini / OpenAI / Anthropic（可切換，含 fallback） |
 | 前端 | 純 HTML / CSS / JS（無框架）、SPA hash router |
-| Geofencing | Overpass API (OSM) + Geolocation API + Notification API + Leaflet 互動地圖 |
+| 地圖 | Leaflet + OpenStreetMap |
+| Geofencing | Overpass API + Geolocation API + Notification API |
 | PWA | manifest.json + Service Worker (network-first) |
 | 部署 | Docker → Zeabur |
-
----
-
-## Geofencing 附近商家
-
-### 運作流程
-
-```
-瀏覽器 Geolocation API
-  → 取得 lat/lng（節流：60 秒間隔 + 50m 最小位移）
-  → GET /api/nearby?lat=25.03&lng=121.56
-      → 後端呼叫 Overpass API（查附近 500m POI）
-      → merchant_aliases 對照表匹配 DB 商家
-      → recommend_by_merchant() 取得最佳卡片
-      → 回傳附近商家 + 推薦卡片（含 lat/lng 座標）
-  → Leaflet 互動地圖：使用者藍色圓點 + 商家 emoji 標記
-  → 點擊標記彈出 popup（商家名 + 最佳卡 + 回饋率 + 連結）
-  → Notification API 推播通知
-```
-
-### API 回傳範例
-
-```json
-{
-  "user_lat": 25.033,
-  "user_lng": 121.565,
-  "nearby": [
-    {
-      "merchant_name": "星巴克",
-      "category_name": "咖啡店",
-      "distance_m": 120,
-      "lat": 25.034,
-      "lng": 121.566,
-      "top_card": {
-        "bank_name": "國泰世華",
-        "card_name": "CUBE 卡",
-        "reward_rate": 3.3,
-        "reward_type": "points",
-        "conditions": "樂饗購方案"
-      }
-    }
-  ]
-}
-```
-
-### 注意事項
-
-- **HTTPS 必要**：Geolocation API 需要 HTTPS（Zeabur 自帶 SSL）
-- **通知權限被拒**：不影響首頁的附近商家 UI，通知只是加分
-- **Overpass API 失敗**：靜默降級，不顯示附近區塊，不影響其他功能
-- **Debug 模式**：API 支援 `debug_lat` / `debug_lng` 參數模擬位置
 
 ---
 
