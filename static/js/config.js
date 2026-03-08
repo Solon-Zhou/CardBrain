@@ -9,7 +9,7 @@ const Config = (() => {
 
   // Capacitor 環境需要絕對 URL，因為 www/ 是 local file
   const API_BASE = isCapacitor
-    ? "https://cardbrain.zeabur.app"
+    ? "https://jetthai-cardbrain-v4.zeabur.app"
     : "";
 
   return { isCapacitor, API_BASE };
