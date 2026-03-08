@@ -5,6 +5,7 @@ CardBrain PWA — FastAPI 後端
 
 import json
 import math
+import os
 import time
 import urllib.request
 import urllib.parse
@@ -13,6 +14,17 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
+
+# 載入 .env（本地開發用；Zeabur 由 dashboard 設定）
+_env_path = Path(__file__).parent / ".env"
+if _env_path.exists():
+    for line in _env_path.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
+
+GOOGLE_PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY", "")
 
 from database.query import (
     list_all_cards,
@@ -240,26 +252,24 @@ def api_nearby(
         if now - cached_time < _NEARBY_TTL:
             return _filter_nearby(cached_data, card_ids, actual_lat, actual_lng)
 
-    # 呼叫 Overpass API
-    pois = _query_overpass(actual_lat, actual_lng)
+    # 呼叫 Google Places API（fallback: Overpass）
+    pois = _query_nearby_places(actual_lat, actual_lng)
 
     # 匹配 + 去重
     seen_merchants: set[str] = set()
     matched: list[dict] = []
     for poi in pois:
-        tags = poi.get("tags", {})
-        osm_name = tags.get("name", "")
-        osm_brand = tags.get("brand", "")
-        if not osm_name and not osm_brand:
+        poi_name = poi.get("name", "")
+        if not poi_name:
             continue
-        merchant_name = match_osm_to_merchant(osm_name, osm_brand)
+        merchant_name = match_osm_to_merchant(poi_name)
         if not merchant_name or merchant_name in seen_merchants:
             continue
         seen_merchants.add(merchant_name)
 
         # 計算距離
-        poi_lat = poi.get("lat", poi.get("center", {}).get("lat", 0))
-        poi_lng = poi.get("lon", poi.get("center", {}).get("lon", 0))
+        poi_lat = poi.get("lat", 0)
+        poi_lng = poi.get("lng", 0)
         dist = _haversine(actual_lat, actual_lng, poi_lat, poi_lng)
 
         # 查推薦卡片（不帶 user_card_ids，cache 全部結果）
@@ -321,8 +331,55 @@ def _filter_nearby(matched: list[dict], card_ids: str, user_lat: float, user_lng
     return {"user_lat": user_lat, "user_lng": user_lng, "nearby": result}
 
 
+def _query_nearby_places(lat: float, lng: float) -> list[dict]:
+    """查附近 500m 商業 POI。優先 Google Places API，fallback Overpass。"""
+    if GOOGLE_PLACES_API_KEY:
+        result = _query_google_places(lat, lng)
+        if result:
+            return result
+    return _query_overpass(lat, lng)
+
+
+def _query_google_places(lat: float, lng: float) -> list[dict]:
+    """呼叫 Google Places API (New) Nearby Search。"""
+    url = "https://places.googleapis.com/v1/places:searchNearby"
+    payload = json.dumps({
+        "includedTypes": [
+            "restaurant", "cafe", "fast_food_restaurant",
+            "convenience_store", "supermarket", "grocery_store",
+            "department_store", "shopping_mall",
+            "gas_station", "drugstore",
+        ],
+        "maxResultCount": 20,
+        "locationRestriction": {
+            "circle": {
+                "center": {"latitude": lat, "longitude": lng},
+                "radius": 500.0,
+            }
+        },
+    }).encode("utf-8")
+    try:
+        req = urllib.request.Request(url, data=payload, method="POST")
+        req.add_header("Content-Type", "application/json")
+        req.add_header("X-Goog-Api-Key", GOOGLE_PLACES_API_KEY)
+        req.add_header("X-Goog-FieldMask", "places.displayName,places.location")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+            places = body.get("places", [])
+            return [
+                {
+                    "name": p.get("displayName", {}).get("text", ""),
+                    "lat": p.get("location", {}).get("latitude", 0),
+                    "lng": p.get("location", {}).get("longitude", 0),
+                }
+                for p in places
+            ]
+    except Exception:
+        return []
+
+
 def _query_overpass(lat: float, lng: float) -> list[dict]:
-    """呼叫 Overpass API 查附近 500m 的商業 POI。"""
+    """Fallback: 呼叫 Overpass API 查附近 500m 的商業 POI。"""
     query = f"""[out:json][timeout:10];
 (
   node["shop"](around:500,{lat},{lng});
@@ -337,7 +394,16 @@ out center tags;"""
         req.add_header("User-Agent", "CardBrain/1.0")
         with urllib.request.urlopen(req, timeout=12) as resp:
             body = json.loads(resp.read().decode("utf-8"))
-            return body.get("elements", [])
+            # 轉為統一格式
+            elements = body.get("elements", [])
+            return [
+                {
+                    "name": e.get("tags", {}).get("name", "") or e.get("tags", {}).get("brand", ""),
+                    "lat": e.get("lat", e.get("center", {}).get("lat", 0)),
+                    "lng": e.get("lon", e.get("center", {}).get("lon", 0)),
+                }
+                for e in elements
+            ]
     except Exception:
         return []
 
