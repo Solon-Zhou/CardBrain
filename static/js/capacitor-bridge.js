@@ -3,7 +3,7 @@
  *
  * 瀏覽器環境：完全 no-op，不載入任何 plugin
  * Capacitor 環境：
- *   1. 背景地理定位 (@transistorsoft/capacitor-background-geolocation)
+ *   1. 背景地理定位 (@capacitor-community/background-geolocation)
  *   2. 本地通知 (@capacitor/local-notifications)
  *   3. 使用者點通知 → 開啟 App 跳轉 #/result
  */
@@ -14,11 +14,13 @@ const CapBridge = (() => {
   }
 
   // ── Capacitor plugin imports ──
-  const { LocalNotifications } = window.Capacitor.Plugins;
+  const { LocalNotifications, BackgroundGeolocation } =
+    window.Capacitor.Plugins;
 
   // 已通知過的商家（避免重複）
   const _notified = new Set();
   let _notifId = 1;
+  let _watcherId = null;
 
   /**
    * 初始化背景定位 + 通知
@@ -55,43 +57,38 @@ const CapBridge = (() => {
 
   async function _startBackgroundGeolocation() {
     try {
-      // 動態載入 — @transistorsoft plugin 掛在 Capacitor.Plugins
-      const BackgroundGeolocation =
-        window.Capacitor.Plugins.BackgroundGeolocation;
-
       if (!BackgroundGeolocation) {
         console.warn("[CapBridge] BackgroundGeolocation plugin not available");
+        _fallbackForegroundWatch();
         return;
       }
 
-      // 位置更新 callback
-      BackgroundGeolocation.addListener("location", async (location) => {
-        await _onLocation(location.latitude, location.longitude);
-      });
-
-      // 設定 & 啟動
-      await BackgroundGeolocation.ready({
-        desiredAccuracy: BackgroundGeolocation.DESIRED_ACCURACY_HIGH ?? 0,
-        distanceFilter: 50, // 50m 最小位移
-        stopOnTerminate: false,
-        startOnBoot: true,
-        debug: false,
-        logLevel: BackgroundGeolocation.LOG_LEVEL_OFF ?? 0,
-        // 背景模式設定
-        enableHeadless: true,
-        stopTimeout: 5,
-        // Android 前景服務通知
-        notification: {
-          title: "CardBrain",
-          text: "偵測附近商家中...",
+      // addWatcher: 前景+背景都會收到位置更新
+      _watcherId = await BackgroundGeolocation.addWatcher(
+        {
+          backgroundMessage: "偵測附近商家中...",
+          backgroundTitle: "CardBrain",
+          requestPermissions: true,
+          stale: false,
+          distanceFilter: 50, // 50m 最小位移
         },
-      });
+        // callback: 每次位置更新觸發
+        (location, error) => {
+          if (error) {
+            if (error.code === "NOT_AUTHORIZED") {
+              console.warn("[CapBridge] location permission denied");
+            }
+            return;
+          }
+          if (location) {
+            _onLocation(location.latitude, location.longitude);
+          }
+        }
+      );
 
-      await BackgroundGeolocation.start();
-      console.log("[CapBridge] BackgroundGeolocation started");
+      console.log("[CapBridge] BackgroundGeolocation watcher started");
     } catch (e) {
       console.warn("[CapBridge] BackgroundGeolocation init error:", e);
-      // fallback: 改用前景 Geolocation
       _fallbackForegroundWatch();
     }
   }

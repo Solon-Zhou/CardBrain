@@ -21,10 +21,10 @@
   },
   "homepage": "https://github.com/Solon-Zhou/CardBrain#readme",
   "dependencies": {
+    "@capacitor-community/background-geolocation": "^1.2.26",
     "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
-    "@capacitor/local-notifications": "^8.0.2",
-    "@transistorsoft/capacitor-background-geolocation": "^8.0.1"
+    "@capacitor/local-notifications": "^8.0.2"
   }
 }
