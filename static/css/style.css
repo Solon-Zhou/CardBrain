@@ -15,6 +15,7 @@
   --radius: 12px;
   --radius-sm: 8px;
   --header-height: 52px;
+  --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -40,11 +41,13 @@ body {
   z-index: 100;
   background: var(--primary);
   color: #fff;
-  height: var(--header-height);
+  height: calc(var(--header-height) + var(--safe-top));
+  padding-top: var(--safe-top);
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 16px;
+  padding-left: 16px;
+  padding-right: 16px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .logo { font-size: 18px; font-weight: 700; }
