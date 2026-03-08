@@ -15,6 +15,7 @@
   --radius: 12px;
   --radius-sm: 8px;
   --header-height: 52px;
+  --tab-height: 56px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -45,99 +46,12 @@ body {
   padding-top: var(--safe-top);
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   padding-left: 16px;
   padding-right: 16px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .logo { font-size: 18px; font-weight: 700; }
-
-/* ── Hamburger Button ─────────────────────── */
-.hamburger-btn {
-  width: 32px;
-  height: 32px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  padding: 4px;
-  flex-shrink: 0;
-}
-.hamburger-btn span {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: #fff;
-  border-radius: 1px;
-  transition: all 0.2s;
-}
-
-/* ── Side Navigation ──────────────────────── */
-.sidenav-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 150;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s;
-}
-.sidenav-overlay.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-.sidenav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 260px;
-  height: 100%;
-  background: var(--card-bg);
-  z-index: 200;
-  transform: translateX(-100%);
-  transition: transform 0.25s ease;
-  box-shadow: 2px 0 12px rgba(0,0,0,0.15);
-  display: flex;
-  flex-direction: column;
-}
-.sidenav.open {
-  transform: translateX(0);
-}
-.sidenav-header {
-  padding: 20px 20px 16px;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--primary);
-  border-bottom: 1px solid var(--border);
-}
-.sidenav-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  text-decoration: none;
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 500;
-  transition: background 0.15s;
-}
-.sidenav-link:active {
-  background: var(--primary-bg);
-}
-.sidenav-link.active {
-  color: var(--primary);
-  background: var(--primary-bg);
-  font-weight: 600;
-}
-.sidenav-icon {
-  font-size: 20px;
-  width: 28px;
-  text-align: center;
-}
 
 /* ── Page Title ───────────────────────────── */
 .page-title {
@@ -329,14 +243,14 @@ body {
   box-shadow: var(--shadow);
 }
 .nearby-page #nearbyMap {
-  height: calc(100dvh - var(--header-height) - 90px);
+  height: calc(100dvh - var(--header-height) - var(--tab-height) - var(--safe-bottom) - 90px);
   min-height: 400px;
   width: 100%;
 }
 
 /* ── Page Container ───────────────────────── */
 #page-container {
-  padding: 16px 16px 24px;
+  padding: 16px 16px calc(24px + var(--tab-height) + var(--safe-bottom));
   min-height: calc(100dvh - var(--header-height));
   overflow: hidden;
 }
@@ -731,7 +645,7 @@ body {
 .agent-section {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--header-height));
+  height: calc(100dvh - var(--header-height) - var(--tab-height) - var(--safe-bottom));
   margin: -16px -16px 0;
   padding: 0 16px;
 }
@@ -844,7 +758,7 @@ body {
   gap: 8px;
   align-items: center;
   padding: 10px 0;
-  padding-bottom: calc(10px + var(--safe-bottom));
+  padding-bottom: 10px;
   min-width: 0;
   flex-shrink: 0;
   border-top: 1px solid var(--border);
@@ -1001,3 +915,140 @@ body {
 }
 .agent-data-regret-summary .green { color: var(--accent); }
 .agent-data-regret-summary .red { color: var(--danger); }
+
+/* ── Bottom Tab Bar ─────────────────────── */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  height: calc(var(--tab-height) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: var(--card-bg);
+  display: flex;
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-decoration: none;
+  color: var(--text-light);
+  font-size: 11px;
+  transition: color 0.2s;
+}
+.tab-item svg { width: 24px; height: 24px; }
+.tab-item.active { color: var(--primary); }
+
+/* ── Compare Page ───────────────────────── */
+.cmp-page { }
+.cmp-slots {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.cmp-slot {
+  flex: 1;
+  min-height: 100px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 12px 8px;
+  text-align: center;
+  background: var(--card-bg);
+}
+.cmp-slot:active {
+  border-color: var(--primary);
+}
+.cmp-slot.filled {
+  border-style: solid;
+  border-color: var(--primary-light);
+  background: var(--primary-bg);
+}
+.cmp-slot-icon {
+  font-size: 28px;
+}
+.cmp-slot-label {
+  font-size: 12px;
+  color: var(--text-light);
+}
+.cmp-slot-bank {
+  font-size: 11px;
+  color: var(--text-light);
+}
+.cmp-slot-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.cmp-table {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.cmp-table-header {
+  display: flex;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.cmp-table-header > div {
+  flex: 1;
+  padding: 10px 12px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmp-table-header > div:first-child {
+  text-align: left;
+}
+.cmp-row {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.cmp-row:last-child { border-bottom: none; }
+.cmp-row > div {
+  flex: 1;
+  padding: 10px 12px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cmp-row > div:first-child {
+  justify-content: flex-start;
+  font-weight: 500;
+  color: var(--text);
+}
+.cmp-rate {
+  font-weight: 800;
+}
+.cmp-rate.winner {
+  color: var(--accent);
+}
+.cmp-empty-table {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-light);
+  font-size: 14px;
+}
