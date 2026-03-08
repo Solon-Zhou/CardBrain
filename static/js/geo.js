@@ -25,7 +25,7 @@ const Geo = (() => {
       const cardIds = Store.getMyCards();
       const params = new URLSearchParams({ lat, lng });
       if (cardIds.length) params.set("card_ids", cardIds.join(","));
-      const res = await fetch(`/api/nearby?${params}`);
+      const res = await fetch(`${Config.API_BASE}/api/nearby?${params}`);
       if (!res.ok) {
         callback({ userLat: lat, userLng: lng, nearby: [], accuracy });
         return;

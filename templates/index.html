@@ -43,6 +43,7 @@
 
   </div>
 
+  <script src="/static/js/config.js"></script>
   <script src="/static/js/store.js"></script>
   <script src="/static/js/api.js"></script>
   <script src="/static/js/geo.js"></script>
@@ -52,8 +53,9 @@
   <script src="/static/js/pages/nearby.js"></script>
   <script src="/static/js/pages/result.js"></script>
   <script src="/static/js/app.js"></script>
+  <script src="/static/js/capacitor-bridge.js"></script>
   <script>
-    if ("serviceWorker" in navigator) {
+    if ("serviceWorker" in navigator && !Config.isCapacitor) {
       navigator.serviceWorker.register("/static/sw.js");
     }
   </script>

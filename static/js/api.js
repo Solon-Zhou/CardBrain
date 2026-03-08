@@ -3,7 +3,7 @@
  */
 const API = (() => {
   async function fetchJSON(url) {
-    const res = await fetch(url);
+    const res = await fetch(Config.API_BASE + url);
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     return res.json();
   }
@@ -37,7 +37,7 @@ const API = (() => {
     if (!payload.card_ids) {
       payload.card_ids = Store.getMyCards();
     }
-    const res = await fetch("/api/brain", {
+    const res = await fetch(Config.API_BASE + "/api/brain", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -51,7 +51,7 @@ const API = (() => {
       message,
       card_ids: Store.getMyCards(),
     };
-    const res = await fetch("/api/agent", {
+    const res = await fetch(Config.API_BASE + "/api/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

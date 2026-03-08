@@ -7,6 +7,8 @@ const Notify = (() => {
   const _notified = new Set();
 
   function isSupported() {
+    // Capacitor 環境由 capacitor-bridge.js 處理原生通知
+    if (Config.isCapacitor) return false;
     return "Notification" in window;
   }
 

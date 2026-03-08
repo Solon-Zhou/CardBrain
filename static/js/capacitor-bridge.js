@@ -1,0 +1,158 @@
+/**
+ * capacitor-bridge.js — Capacitor 原生功能橋接
+ *
+ * 瀏覽器環境：完全 no-op，不載入任何 plugin
+ * Capacitor 環境：
+ *   1. 背景地理定位 (@transistorsoft/capacitor-background-geolocation)
+ *   2. 本地通知 (@capacitor/local-notifications)
+ *   3. 使用者點通知 → 開啟 App 跳轉 #/result
+ */
+const CapBridge = (() => {
+  // 瀏覽器環境 → 立即返回空物件
+  if (!Config.isCapacitor) {
+    return { init() {} };
+  }
+
+  // ── Capacitor plugin imports ──
+  const { LocalNotifications } = window.Capacitor.Plugins;
+
+  // 已通知過的商家（避免重複）
+  const _notified = new Set();
+  let _notifId = 1;
+
+  /**
+   * 初始化背景定位 + 通知
+   */
+  async function init() {
+    // 1. 請求通知權限
+    await _requestNotificationPermission();
+
+    // 2. 監聽通知點擊
+    LocalNotifications.addListener(
+      "localNotificationActionPerformed",
+      (event) => {
+        const data = event.notification?.extra;
+        if (data?.merchant) {
+          location.hash = `#/result?type=merchant&q=${encodeURIComponent(data.merchant)}`;
+        }
+      }
+    );
+
+    // 3. 啟動背景定位
+    await _startBackgroundGeolocation();
+  }
+
+  async function _requestNotificationPermission() {
+    try {
+      const perm = await LocalNotifications.checkPermissions();
+      if (perm.display !== "granted") {
+        await LocalNotifications.requestPermissions();
+      }
+    } catch (e) {
+      console.warn("[CapBridge] notification permission error:", e);
+    }
+  }
+
+  async function _startBackgroundGeolocation() {
+    try {
+      // 動態載入 — @transistorsoft plugin 掛在 Capacitor.Plugins
+      const BackgroundGeolocation =
+        window.Capacitor.Plugins.BackgroundGeolocation;
+
+      if (!BackgroundGeolocation) {
+        console.warn("[CapBridge] BackgroundGeolocation plugin not available");
+        return;
+      }
+
+      // 位置更新 callback
+      BackgroundGeolocation.addListener("location", async (location) => {
+        await _onLocation(location.latitude, location.longitude);
+      });
+
+      // 設定 & 啟動
+      await BackgroundGeolocation.ready({
+        desiredAccuracy: BackgroundGeolocation.DESIRED_ACCURACY_HIGH ?? 0,
+        distanceFilter: 50, // 50m 最小位移
+        stopOnTerminate: false,
+        startOnBoot: true,
+        debug: false,
+        logLevel: BackgroundGeolocation.LOG_LEVEL_OFF ?? 0,
+        // 背景模式設定
+        enableHeadless: true,
+        stopTimeout: 5,
+        // Android 前景服務通知
+        notification: {
+          title: "CardBrain",
+          text: "偵測附近商家中...",
+        },
+      });
+
+      await BackgroundGeolocation.start();
+      console.log("[CapBridge] BackgroundGeolocation started");
+    } catch (e) {
+      console.warn("[CapBridge] BackgroundGeolocation init error:", e);
+      // fallback: 改用前景 Geolocation
+      _fallbackForegroundWatch();
+    }
+  }
+
+  /**
+   * Plugin 不可用時，改用瀏覽器 Geolocation watchPosition
+   * （只在 App 前景時有效）
+   */
+  function _fallbackForegroundWatch() {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.watchPosition(
+      (pos) => _onLocation(pos.coords.latitude, pos.coords.longitude),
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 60000 }
+    );
+  }
+
+  /**
+   * 收到位置更新 → 查附近商家 → 發通知
+   */
+  async function _onLocation(lat, lng) {
+    try {
+      const cardIds = Store.getMyCards();
+      const params = new URLSearchParams({ lat, lng });
+      if (cardIds.length) params.set("card_ids", cardIds.join(","));
+
+      const res = await fetch(`${Config.API_BASE}/api/nearby?${params}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      const nearby = data.nearby || [];
+
+      for (const item of nearby) {
+        if (_notified.has(item.merchant_name)) continue;
+        if (item.distance_m > 200) continue; // 200m 內才通知
+
+        _notified.add(item.merchant_name);
+        const card = item.top_card;
+
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              id: _notifId++,
+              title: `附近有 ${item.merchant_name}`,
+              body: `建議刷 ${card.bank_name} ${card.card_name}，回饋 ${card.reward_rate}%`,
+              extra: { merchant: item.merchant_name },
+            },
+          ],
+        });
+      }
+    } catch (e) {
+      console.warn("[CapBridge] onLocation error:", e);
+    }
+  }
+
+  return { init };
+})();
+
+// App 啟動時自動初始化
+document.addEventListener("DOMContentLoaded", () => {
+  if (Config.isCapacitor) {
+    CapBridge.init();
+  }
+});

@@ -1,0 +1,30 @@
+{
+  "name": "card",
+  "version": "1.0.0",
+  "description": "> **JetThAI Hackathon | 第一隊 #1 — 卡比獸** > > AI Agent 幫你秒算最佳刷卡推薦。走到商家附近自動推薦最佳刷卡！",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Solon-Zhou/CardBrain.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Solon-Zhou/CardBrain/issues"
+  },
+  "homepage": "https://github.com/Solon-Zhou/CardBrain#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/local-notifications": "^8.0.2",
+    "@transistorsoft/capacitor-background-geolocation": "^8.0.1"
+  }
+}

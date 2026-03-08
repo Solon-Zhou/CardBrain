@@ -8,12 +8,11 @@ import math
 import time
 import urllib.request
 import urllib.parse
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-
-from fastapi import Request
 
 from database.query import (
     list_all_cards,
@@ -33,6 +32,17 @@ from brain import (
 from llm import extract_intent, generate_reply
 
 app = FastAPI(title="CardBrain API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "capacitor://localhost",
+        "ionic://localhost",
+        "http://localhost",
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 BASE = Path(__file__).parent
 
