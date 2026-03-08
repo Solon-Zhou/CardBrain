@@ -48,9 +48,10 @@ app = FastAPI(title="CardBrain API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://localhost",
+        "http://localhost",
         "capacitor://localhost",
         "ionic://localhost",
-        "http://localhost",
     ],
     allow_methods=["*"],
     allow_headers=["*"],
