@@ -10,12 +10,12 @@ async function ComparePage() {
       <div class="page-title">🔍 卡片比對</div>
       <div class="cmp-slots">
         <div class="cmp-slot" id="cmpSlot0">
-          <span class="cmp-slot-icon">💳</span>
-          <span class="cmp-slot-label">選擇卡片 A</span>
+          <span class="cmp-slot-placeholder-icon">💳</span>
+          <span class="cmp-slot-placeholder-text">選擇卡片 A</span>
         </div>
         <div class="cmp-slot" id="cmpSlot1">
-          <span class="cmp-slot-icon">💳</span>
-          <span class="cmp-slot-label">選擇卡片 B</span>
+          <span class="cmp-slot-placeholder-icon">💳</span>
+          <span class="cmp-slot-placeholder-text">選擇卡片 B</span>
         </div>
       </div>
       <div id="cmpResult">
@@ -47,10 +47,9 @@ ComparePage.init = () => {
   const listEl = document.getElementById("cmpCardList");
   const resultEl = document.getElementById("cmpResult");
 
-  const selected = [null, null]; // 兩個 slot 的卡片物件
+  const selected = [null, null];
   let activeSlot = 0;
 
-  // 載入全部卡片
   async function ensureCards() {
     if (!_cmpAllCards) {
       _cmpAllCards = await API.getCards();
@@ -58,7 +57,7 @@ ComparePage.init = () => {
     return _cmpAllCards;
   }
 
-  // ── 渲染 slot 狀態 ──
+  // ── 渲染信用卡造型 slot ──
   function updateSlot(index) {
     const el = document.getElementById(`cmpSlot${index}`);
     if (!el) return;
@@ -66,16 +65,19 @@ ComparePage.init = () => {
     if (card) {
       const color = BANK_COLORS[card.bank_name] || "#555";
       el.className = "cmp-slot filled";
+      el.style.background = `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`;
       el.innerHTML = `
-        <span class="cmp-slot-icon" style="color:${color}">💳</span>
-        <span class="cmp-slot-name">${card.card_name}</span>
-        <span class="cmp-slot-bank">${card.bank_name}</span>
+        <span class="cmp-slot-tag">Card ${index === 0 ? "A" : "B"}</span>
+        <span class="cmp-slot-card-bank">${card.bank_name}</span>
+        <span class="cmp-slot-card-name">${card.card_name}</span>
+        <span class="cmp-slot-card-dots">•••• •••• •••• ••••</span>
       `;
     } else {
       el.className = "cmp-slot";
+      el.style.background = "";
       el.innerHTML = `
-        <span class="cmp-slot-icon">💳</span>
-        <span class="cmp-slot-label">選擇卡片 ${index === 0 ? "A" : "B"}</span>
+        <span class="cmp-slot-placeholder-icon">💳</span>
+        <span class="cmp-slot-placeholder-text">選擇卡片 ${index === 0 ? "A" : "B"}</span>
       `;
     }
   }
@@ -156,7 +158,6 @@ ComparePage.init = () => {
         API.getCardRewards(selected[1].id),
       ]);
 
-      // 建立分類 → 回饋率的 map
       const map0 = {};
       rewards0.forEach((r) => {
         const key = r.category_name;
@@ -173,7 +174,6 @@ ComparePage.init = () => {
         }
       });
 
-      // 合併所有分類
       const allCats = [...new Set([...Object.keys(map0), ...Object.keys(map1)])];
       allCats.sort();
 
@@ -182,7 +182,6 @@ ComparePage.init = () => {
         return;
       }
 
-      // 統計勝負
       let wins0 = 0, wins1 = 0;
       const rows = allCats.map((cat) => {
         const r0 = map0[cat] ? map0[cat].rate : 0;
@@ -192,44 +191,53 @@ ComparePage.init = () => {
         return { cat, r0, r1 };
       });
 
-      const name0 = selected[0].card_name.length > 8
-        ? selected[0].card_name.substring(0, 8) + "…"
+      const name0 = selected[0].card_name.length > 6
+        ? selected[0].card_name.substring(0, 6) + "…"
         : selected[0].card_name;
-      const name1 = selected[1].card_name.length > 8
-        ? selected[1].card_name.substring(0, 8) + "…"
+      const name1 = selected[1].card_name.length > 6
+        ? selected[1].card_name.substring(0, 6) + "…"
         : selected[1].card_name;
 
       let html = `
         <div class="cmp-table">
           <div class="cmp-table-header">
-            <div>分類</div>
+            <div>類別</div>
             <div>${name0}</div>
             <div>${name1}</div>
           </div>`;
 
       rows.forEach(({ cat, r0, r1 }) => {
-        const class0 = r0 > r1 ? "winner" : "";
-        const class1 = r1 > r0 ? "winner" : "";
+        const w0 = r0 > r1 ? "winner" : "";
+        const w1 = r1 > r0 ? "winner" : "";
+        const check = '<span class="cmp-check">✓</span>';
         html += `
           <div class="cmp-row">
-            <div>${cat}</div>
-            <div><span class="cmp-rate ${class0}">${r0 ? r0 + "%" : "—"}</span></div>
-            <div><span class="cmp-rate ${class1}">${r1 ? r1 + "%" : "—"}</span></div>
+            <div class="cmp-row-cat">${cat}</div>
+            <div class="cmp-cell">
+              <span class="cmp-cell-inner ${w0}">${r0 ? r0 + "% 回饋" : "—"}${w0 ? check : ""}</span>
+            </div>
+            <div class="cmp-cell">
+              <span class="cmp-cell-inner ${w1}">${r1 ? r1 + "% 回饋" : "—"}${w1 ? check : ""}</span>
+            </div>
           </div>`;
       });
 
       html += `</div>`;
 
-      // 簡短總結
-      let summary = "";
+      // 智慧分析
+      let summaryText = "";
       if (wins0 > wins1) {
-        summary = `<b>${selected[0].card_name}</b> 在 ${wins0} 個分類勝出`;
+        summaryText = `<b>${selected[0].card_name}</b> 在 <b>${wins0}</b> 個消費類別中提供更高回饋，整體表現較優。`;
       } else if (wins1 > wins0) {
-        summary = `<b>${selected[1].card_name}</b> 在 ${wins1} 個分類勝出`;
+        summaryText = `<b>${selected[1].card_name}</b> 在 <b>${wins1}</b> 個消費類別中提供更高回饋，整體表現較優。`;
       } else {
-        summary = "兩張卡片旗鼓相當";
+        summaryText = "兩張卡片在不同類別各有優勢，建議依消費習慣搭配使用。";
       }
-      html += `<div style="text-align:center;padding:12px;font-size:13px;color:var(--text-light)">${summary}</div>`;
+      html += `
+        <div class="cmp-summary">
+          <div class="cmp-summary-title">智慧分析</div>
+          <div class="cmp-summary-text">${summaryText}</div>
+        </div>`;
 
       resultEl.innerHTML = html;
     } catch (e) {

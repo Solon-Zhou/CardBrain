@@ -29,7 +29,6 @@ body {
   color: var(--text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  max-width: 480px;
   margin: 0 auto;
   min-height: 100dvh;
   position: relative;
@@ -921,8 +920,6 @@ body {
   position: fixed;
   bottom: 0;
   left: 0; right: 0;
-  max-width: 480px;
-  margin: 0 auto;
   height: calc(var(--tab-height) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
   background: var(--card-bg);
@@ -953,50 +950,71 @@ body {
   gap: 12px;
   margin-bottom: 20px;
 }
+/* 信用卡造型 slot */
 .cmp-slot {
   flex: 1;
-  min-height: 100px;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
+  aspect-ratio: 1.6 / 1;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  padding: 12px 8px;
+  padding: 12px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  /* empty state */
+  border: 2px dashed var(--border);
   background: var(--card-bg);
 }
-.cmp-slot:active {
-  border-color: var(--primary);
+.cmp-slot:active { border-color: var(--primary); }
+.cmp-slot-placeholder-icon {
+  font-size: 32px;
+  opacity: 0.4;
 }
-.cmp-slot.filled {
-  border-style: solid;
-  border-color: var(--primary-light);
-  background: var(--primary-bg);
-}
-.cmp-slot-icon {
-  font-size: 28px;
-}
-.cmp-slot-label {
+.cmp-slot-placeholder-text {
   font-size: 12px;
   color: var(--text-light);
 }
-.cmp-slot-bank {
-  font-size: 11px;
-  color: var(--text-light);
+/* filled state — looks like a credit card */
+.cmp-slot.filled {
+  border: none;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
-.cmp-slot-name {
-  font-size: 13px;
+.cmp-slot-card-bank {
+  font-size: 11px;
+  opacity: 0.85;
+  align-self: flex-start;
+}
+.cmp-slot-card-name {
+  font-size: 14px;
   font-weight: 700;
-  color: var(--text);
+  margin-top: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
 }
+.cmp-slot-card-dots {
+  font-size: 10px;
+  letter-spacing: 2px;
+  opacity: 0.6;
+  margin-top: auto;
+  align-self: flex-start;
+}
+.cmp-slot-tag {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+/* 比較表格 */
 .cmp-table {
   background: var(--card-bg);
   border-radius: var(--radius);
@@ -1012,7 +1030,7 @@ body {
 }
 .cmp-table-header > div {
   flex: 1;
-  padding: 10px 12px;
+  padding: 10px 8px;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1020,31 +1038,73 @@ body {
 }
 .cmp-table-header > div:first-child {
   text-align: left;
+  padding-left: 12px;
 }
 .cmp-row {
   display: flex;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
+  align-items: stretch;
 }
 .cmp-row:last-child { border-bottom: none; }
-.cmp-row > div {
+.cmp-row-cat {
   flex: 1;
-  padding: 10px 12px;
-  text-align: center;
+  padding: 12px 8px 12px 12px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: var(--text);
+}
+.cmp-cell {
+  flex: 1;
+  padding: 8px 6px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.cmp-row > div:first-child {
-  justify-content: flex-start;
-  font-weight: 500;
-  color: var(--text);
+.cmp-cell-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-light);
+  background: var(--bg);
+  border: 2px solid transparent;
+  transition: all 0.2s;
 }
-.cmp-rate {
-  font-weight: 800;
-}
-.cmp-rate.winner {
+.cmp-cell-inner.winner {
   color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(0, 184, 148, 0.08);
+}
+.cmp-cell-inner.winner .cmp-check {
+  display: inline;
+}
+.cmp-check {
+  display: none;
+  font-size: 14px;
+}
+/* summary */
+.cmp-summary {
+  margin-top: 16px;
+  background: var(--primary-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+.cmp-summary-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+.cmp-summary-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
 }
 .cmp-empty-table {
   text-align: center;
