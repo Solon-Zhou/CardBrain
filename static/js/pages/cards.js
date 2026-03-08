@@ -1,5 +1,5 @@
 /**
- * cards.js — 卡片管理頁面：展示每張卡的回饋優惠
+ * cards.js — 卡片管理頁面：信用卡造型 + 回饋 tile 網格
  */
 
 const BANK_COLORS = {
@@ -26,15 +26,15 @@ function _buildCardHtml(c) {
   const feeText = c.annual_fee ? `年費 $${c.annual_fee}` : "免年費";
   return `
     <div class="cd-card" data-card-id="${c.id}">
-      <div class="cd-card-header" style="background:${color}">
-        <div class="cd-card-info">
-          <div class="cd-card-bank">${c.bank_name}</div>
-          <div class="cd-card-name">${c.card_name}</div>
-          <div class="cd-card-fee">${feeText}</div>
-        </div>
-        <div class="cd-card-actions">
-          <span class="cd-card-expand">▼</span>
+      <div class="cd-card-visual" style="background:linear-gradient(135deg, ${color} 0%, ${color}cc 100%)">
+        <div class="cd-card-visual-top">
+          <span class="cd-card-visual-bank">${c.bank_name}</span>
           <span class="cd-card-remove" data-remove="${c.id}">&times;</span>
+        </div>
+        <div class="cd-card-visual-name">${c.card_name}</div>
+        <div class="cd-card-visual-bottom">
+          <span class="cd-card-visual-dots">•••• •••• •••• ••••</span>
+          <span class="cd-card-visual-fee">${feeText}</span>
         </div>
       </div>
       ${c.note ? `<div class="cd-card-note">${c.note}</div>` : ""}
@@ -53,40 +53,33 @@ function _renderRewardsInto(cardId, rewards) {
     return;
   }
 
-  const groups = {};
-  rewards.forEach((r) => {
-    const groupName = r.parent_name || r.category_name;
-    if (!groups[groupName]) groups[groupName] = [];
-    groups[groupName].push(r);
+  // 按回饋率排序（高到低）
+  const sorted = [...rewards].sort((a, b) => b.reward_rate - a.reward_rate);
+
+  let html = '<div class="cd-rewards-section">';
+  html += '<div class="cd-rewards-title">回饋比例</div>';
+  html += '<div class="cd-rewards-grid">';
+
+  sorted.forEach((r) => {
+    const typeLabel = REWARD_TYPE_LABEL[r.reward_type] || r.reward_type;
+    const rateClass = r.reward_rate >= 3 ? "high" : r.reward_rate >= 1.5 ? "mid" : "";
+    const capHtml = r.reward_cap
+      ? `<div class="cd-reward-tile-cap">上限 $${r.reward_cap}/月</div>`
+      : "";
+    const condHtml = r.conditions
+      ? `<div class="cd-reward-tile-cond">${r.conditions}</div>`
+      : "";
+
+    html += `
+      <div class="cd-reward-tile">
+        <div class="cd-reward-tile-rate ${rateClass}">${r.reward_rate}%</div>
+        <div class="cd-reward-tile-cat">${r.category_name}</div>
+        <div class="cd-reward-tile-type">${typeLabel}</div>
+        ${capHtml}${condHtml}
+      </div>`;
   });
 
-  let html = "";
-  Object.entries(groups).forEach(([groupName, items]) => {
-    html += `<div class="cd-reward-group">`;
-    html += `<div class="cd-reward-group-name">${groupName}</div>`;
-    items.forEach((r) => {
-      const typeLabel = REWARD_TYPE_LABEL[r.reward_type] || r.reward_type;
-      const capHtml = r.reward_cap
-        ? `<span class="cd-reward-cap">上限 $${r.reward_cap}/月</span>`
-        : "";
-      const condHtml = r.conditions
-        ? `<span class="cd-reward-cond">${r.conditions}</span>`
-        : "";
-      const rateClass = r.reward_rate >= 3 ? "high" : r.reward_rate >= 1.5 ? "mid" : "";
-
-      html += `
-        <div class="cd-reward-row">
-          <div class="cd-reward-cat">${r.category_name !== groupName ? r.category_name : ""}</div>
-          <div class="cd-reward-detail">
-            <span class="cd-reward-rate ${rateClass}">${r.reward_rate}%</span>
-            <span class="cd-reward-type">${typeLabel}</span>
-            ${capHtml}${condHtml}
-          </div>
-        </div>`;
-    });
-    html += `</div>`;
-  });
-
+  html += '</div></div>';
   container.innerHTML = html;
 }
 
@@ -175,10 +168,10 @@ CardsPage.init = () => {
 
   // ── 展開/收合 ──
   cardListEl.addEventListener("click", (e) => {
-    const header = e.target.closest(".cd-card-header");
-    if (!header) return;
+    const visual = e.target.closest(".cd-card-visual");
+    if (!visual) return;
     if (e.target.closest(".cd-card-remove")) return;
-    const card = header.closest(".cd-card");
+    const card = visual.closest(".cd-card");
     card.classList.toggle("expanded");
   });
 

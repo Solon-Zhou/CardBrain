@@ -73,43 +73,55 @@ body {
   box-shadow: var(--shadow);
   background: var(--card-bg);
 }
-.cd-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
+/* 信用卡造型 */
+.cd-card-visual {
+  border-radius: var(--radius);
+  padding: 18px 16px 14px;
   color: #fff;
   cursor: pointer;
-  min-height: 72px;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
   transition: opacity 0.15s;
 }
-.cd-card-header:active { opacity: 0.9; }
-.cd-card-info { flex: 1; min-width: 0; }
-.cd-card-bank { font-size: 11px; opacity: 0.8; }
-.cd-card-name { font-size: 16px; font-weight: 700; margin: 2px 0; }
-.cd-card-fee { font-size: 11px; opacity: 0.7; }
-.cd-card-actions {
+.cd-card-visual:active { opacity: 0.9; }
+.cd-card-visual-top {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  align-items: flex-start;
 }
-.cd-card-expand {
-  font-size: 14px;
-  transition: transform 0.25s;
-  opacity: 0.7;
-}
-.cd-card.expanded .cd-card-expand {
-  transform: rotate(180deg);
-}
+.cd-card-visual-bank { font-size: 11px; opacity: 0.85; }
 .cd-card-remove {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
   opacity: 0.7;
   cursor: pointer;
+  padding: 2px 4px;
 }
 .cd-card-remove:active { opacity: 1; }
+.cd-card-visual-name {
+  font-size: 17px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+.cd-card-visual-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.cd-card-visual-dots {
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.5;
+}
+.cd-card-visual-fee {
+  font-size: 11px;
+  opacity: 0.7;
+}
 .cd-card-note {
   padding: 8px 16px;
   font-size: 12px;
@@ -124,7 +136,7 @@ body {
   transition: max-height 0.3s ease;
 }
 .cd-card.expanded .cd-card-rewards {
-  max-height: 2000px;
+  max-height: 3000px;
 }
 .cd-loading {
   padding: 16px;
@@ -138,65 +150,61 @@ body {
   font-size: 13px;
   color: var(--text-light);
 }
-/* reward groups */
-.cd-reward-group {
-  border-top: 1px solid var(--border);
+/* 回饋 tile 網格 */
+.cd-rewards-section {
+  padding: 14px;
 }
-.cd-reward-group-name {
-  padding: 8px 16px 4px;
-  font-size: 12px;
+.cd-rewards-title {
+  font-size: 14px;
   font-weight: 700;
   color: var(--primary);
-  background: var(--primary-bg);
+  margin-bottom: 10px;
+  padding-left: 8px;
+  border-left: 3px solid var(--primary);
 }
-.cd-reward-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  border-bottom: 1px solid #f0f0f0;
+.cd-rewards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
-.cd-reward-row:last-child { border-bottom: none; }
-.cd-reward-cat {
-  font-size: 13px;
-  color: var(--text);
-  flex: 1;
-  min-width: 0;
+.cd-reward-tile {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 10px;
+  text-align: center;
+  transition: box-shadow 0.2s;
 }
-.cd-reward-detail {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-.cd-reward-rate {
-  font-size: 15px;
+.cd-reward-tile-rate {
+  font-size: 22px;
   font-weight: 800;
   color: var(--text);
 }
-.cd-reward-rate.high {
-  color: var(--accent);
+.cd-reward-tile-rate.high { color: var(--accent); }
+.cd-reward-tile-rate.mid { color: var(--primary); }
+.cd-reward-tile-cat {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+  margin-top: 2px;
 }
-.cd-reward-rate.mid {
-  color: var(--primary);
-}
-.cd-reward-type {
-  font-size: 11px;
-  padding: 2px 6px;
+.cd-reward-tile-type {
+  font-size: 10px;
+  display: inline-block;
+  padding: 1px 6px;
   border-radius: 4px;
-  background: #eee;
+  background: var(--card-bg);
   color: var(--text-light);
+  margin-top: 4px;
 }
-.cd-reward-cap {
-  font-size: 11px;
+.cd-reward-tile-cap {
+  font-size: 10px;
   color: var(--danger);
+  margin-top: 2px;
 }
-.cd-reward-cond {
-  font-size: 11px;
+.cd-reward-tile-cond {
+  font-size: 10px;
   color: var(--text-light);
+  margin-top: 1px;
   font-style: italic;
 }
 /* empty state */
