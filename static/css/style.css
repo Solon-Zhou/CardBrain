@@ -30,7 +30,8 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   margin: 0 auto;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   position: relative;
 }
 
@@ -258,8 +259,8 @@ body {
 /* ── Page Container ───────────────────────── */
 #page-container {
   padding: 16px 16px calc(24px + var(--tab-height) + var(--safe-bottom));
-  min-height: calc(100dvh - var(--header-height));
-  overflow: hidden;
+  height: calc(100dvh - var(--header-height) - var(--safe-top));
+  overflow-y: auto;
 }
 
 /* ── Add Card Modal ───────────────────────── */
@@ -652,7 +653,7 @@ body {
 .agent-section {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--header-height) - var(--safe-top) - var(--tab-height) - var(--safe-bottom) - 24px);
+  height: 100%;
   margin: -16px -16px 0;
   padding: 0 16px;
 }
