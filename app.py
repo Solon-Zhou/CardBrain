@@ -215,6 +215,14 @@ async def api_agent(request: Request):
     intent = extract_intent(message)
     mode = intent.get("mode", "instant")
 
+    # 無法辨識的輸入 → 直接回傳引導訊息，不呼叫 brain
+    if mode == "unknown":
+        return {
+            "reply": "我是刷卡推薦助手 💳 請輸入消費情境，例如「星巴克 300」或「日本旅遊 10萬」",
+            "mode": None,
+            "data": None,
+        }
+
     # 2. 呼叫精算引擎
     brain_input = {**intent, "card_ids": card_ids}
     if mode == "instant":
