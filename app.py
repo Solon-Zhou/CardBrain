@@ -30,6 +30,7 @@ from database.query import (
     list_all_cards,
     list_categories,
     recommend_by_merchant,
+    recommend_by_merchants_batch,
     recommend_by_category_id,
     search_merchants,
     get_card_rewards,
@@ -256,9 +257,9 @@ def api_nearby(
     # 呼叫 Google Places API（fallback: Overpass）
     pois = _query_nearby_places(actual_lat, actual_lng)
 
-    # 匹配 + 去重
+    # Phase 1: 匹配 POI → DB 商家名稱，收集去重後的商家清單
+    poi_merchants: list[dict] = []  # [{poi, merchant_name}]
     seen_merchants: set[str] = set()
-    matched: list[dict] = []
     for poi in pois:
         poi_name = poi.get("name", "")
         if not poi_name:
@@ -267,16 +268,23 @@ def api_nearby(
         if not merchant_name or merchant_name in seen_merchants:
             continue
         seen_merchants.add(merchant_name)
+        poi_merchants.append({"poi": poi, "merchant_name": merchant_name})
 
-        # 計算距離
+    # Phase 2: 一次批次查詢所有商家的推薦（取代 N+1）
+    all_merchant_names = [pm["merchant_name"] for pm in poi_merchants]
+    recs_map = recommend_by_merchants_batch(all_merchant_names)
+
+    # Phase 3: 組裝結果
+    matched: list[dict] = []
+    for pm in poi_merchants:
+        merchant_name = pm["merchant_name"]
+        recs = recs_map.get(merchant_name, [])
+        if not recs:
+            continue
+        poi = pm["poi"]
         poi_lat = poi.get("lat", 0)
         poi_lng = poi.get("lng", 0)
         dist = _haversine(actual_lat, actual_lng, poi_lat, poi_lng)
-
-        # 查推薦卡片（不帶 user_card_ids，cache 全部結果）
-        recs = recommend_by_merchant(merchant_name)
-        if not recs:
-            continue
         top = recs[0]
         matched.append({
             "merchant_name": merchant_name,

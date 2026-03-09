@@ -103,10 +103,10 @@ NearbyPage.init = () => {
       const rateUnit = card.reward_type === "miles" ? " 元/哩" :
         card.reward_type === "points" ? "% 點" : "% 回饋";
       const popupHtml = `<div class="nearby-popup">
-        <div class="nearby-popup-name">${item.merchant_name}</div>
-        <div class="nearby-popup-cat">${item.category_name} · ${item.distance_m}m</div>
+        <div class="nearby-popup-name">${escapeHtml(item.merchant_name)}</div>
+        <div class="nearby-popup-cat">${escapeHtml(item.category_name)} · ${item.distance_m}m</div>
         <div class="nearby-popup-rate">${card.reward_rate}${rateUnit}</div>
-        <div class="nearby-popup-card">${card.bank_name} ${card.card_name}</div>
+        <div class="nearby-popup-card">${escapeHtml(card.bank_name)} ${escapeHtml(card.card_name)}</div>
         <a class="nearby-popup-link" href="#/result?type=merchant&q=${encodeURIComponent(item.merchant_name)}">查看推薦 →</a>
       </div>`;
 
@@ -162,4 +162,8 @@ NearbyPage.init = () => {
   document.getElementById("btnGrantLocation").addEventListener("click", () => {
     _startGeo();
   });
+};
+
+NearbyPage.destroy = () => {
+  Geo.stopWatching();
 };

@@ -68,8 +68,8 @@ ComparePage.init = () => {
       el.style.background = `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`;
       el.innerHTML = `
         <span class="cmp-slot-tag">Card ${index === 0 ? "A" : "B"}</span>
-        <span class="cmp-slot-card-bank">${card.bank_name}</span>
-        <span class="cmp-slot-card-name">${card.card_name}</span>
+        <span class="cmp-slot-card-bank">${escapeHtml(card.bank_name)}</span>
+        <span class="cmp-slot-card-name">${escapeHtml(card.card_name)}</span>
         <span class="cmp-slot-card-dots">•••• •••• •••• ••••</span>
       `;
     } else {
@@ -124,8 +124,8 @@ ComparePage.init = () => {
               <span>${bank.substring(0, 1)}</span>
             </div>
             <div class="modal-card-info">
-              <div class="modal-card-name">${c.card_name}</div>
-              <div class="modal-card-bank">${bank}</div>
+              <div class="modal-card-name">${escapeHtml(c.card_name)}</div>
+              <div class="modal-card-bank">${escapeHtml(bank)}</div>
             </div>
             <button class="modal-card-btn ${isSelected ? "added" : ""}"
               data-card-id="${c.id}">${isSelected ? "已選" : "選擇"}</button>
@@ -202,8 +202,8 @@ ComparePage.init = () => {
         <div class="cmp-table">
           <div class="cmp-table-header">
             <div>類別</div>
-            <div>${name0}</div>
-            <div>${name1}</div>
+            <div>${escapeHtml(name0)}</div>
+            <div>${escapeHtml(name1)}</div>
           </div>`;
 
       rows.forEach(({ cat, r0, r1 }) => {
@@ -212,7 +212,7 @@ ComparePage.init = () => {
         const check = '<span class="cmp-check">✓</span>';
         html += `
           <div class="cmp-row">
-            <div class="cmp-row-cat">${cat}</div>
+            <div class="cmp-row-cat">${escapeHtml(cat)}</div>
             <div class="cmp-cell">
               <span class="cmp-cell-inner ${w0}">${r0 ? r0 + "% 回饋" : "—"}${w0 ? check : ""}</span>
             </div>
@@ -227,9 +227,9 @@ ComparePage.init = () => {
       // 智慧分析
       let summaryText = "";
       if (wins0 > wins1) {
-        summaryText = `<b>${selected[0].card_name}</b> 在 <b>${wins0}</b> 個消費類別中提供更高回饋，整體表現較優。`;
+        summaryText = `<b>${escapeHtml(selected[0].card_name)}</b> 在 <b>${wins0}</b> 個消費類別中提供更高回饋，整體表現較優。`;
       } else if (wins1 > wins0) {
-        summaryText = `<b>${selected[1].card_name}</b> 在 <b>${wins1}</b> 個消費類別中提供更高回饋，整體表現較優。`;
+        summaryText = `<b>${escapeHtml(selected[1].card_name)}</b> 在 <b>${wins1}</b> 個消費類別中提供更高回饋，整體表現較優。`;
       } else {
         summaryText = "兩張卡片在不同類別各有優勢，建議依消費習慣搭配使用。";
       }

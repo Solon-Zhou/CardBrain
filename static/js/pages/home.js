@@ -35,12 +35,6 @@ HomePage.init = () => {
   const quickTags = document.getElementById("agentQuickTags");
   let _sending = false;
 
-  function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
   function addBubble(role, text) {
     const bubble = document.createElement("div");
     bubble.className = `agent-bubble ${role}`;
@@ -135,7 +129,7 @@ function _buildInstantCard(data) {
   let html = `<div class="agent-data-card">`;
   html += `<div class="agent-data-best">
     <div class="agent-data-best-label">最佳推薦</div>
-    <div class="agent-data-best-name">${best.bank_name} ${best.card_name}</div>
+    <div class="agent-data-best-name">${escapeHtml(best.bank_name)} ${escapeHtml(best.card_name)}</div>
     <div class="agent-data-best-reward">$${(best.actual_reward || 0).toFixed(1)} <small>${unit}</small></div>
     <div class="agent-data-best-rate">${best.reward_rate}%</div>
   </div>`;
@@ -145,7 +139,7 @@ function _buildInstantCard(data) {
     results.slice(1, 4).forEach((r, i) => {
       html += `<div class="agent-data-other">
         <span class="agent-data-rank">#${i + 2}</span>
-        <span class="agent-data-other-name">${r.bank_name} ${r.card_name}</span>
+        <span class="agent-data-other-name">${escapeHtml(r.bank_name)} ${escapeHtml(r.card_name)}</span>
         <span class="agent-data-other-reward">$${(r.actual_reward || 0).toFixed(1)}</span>
       </div>`;
     });
@@ -167,7 +161,7 @@ function _buildPlanCard(data) {
     html += `<div class="agent-data-bring">帶卡清單：`;
     cards.forEach((c) => {
       const usage = (c.usage || []).join("、");
-      html += `<div class="agent-data-bring-item">${c.card} → ${usage}</div>`;
+      html += `<div class="agent-data-bring-item">${escapeHtml(c.card)} → ${escapeHtml(usage)}</div>`;
     });
     html += `</div>`;
   }

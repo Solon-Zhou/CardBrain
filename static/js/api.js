@@ -1,4 +1,14 @@
 /**
+ * escapeHtml — 全域 HTML 轉義，防止 XSS
+ */
+function escapeHtml(text) {
+  if (text == null) return "";
+  const div = document.createElement("div");
+  div.textContent = String(text);
+  return div.innerHTML;
+}
+
+/**
  * api.js — API 呼叫封裝
  */
 const API = (() => {

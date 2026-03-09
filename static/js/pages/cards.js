@@ -28,16 +28,16 @@ function _buildCardHtml(c) {
     <div class="cd-card" data-card-id="${c.id}">
       <div class="cd-card-visual" style="background:linear-gradient(135deg, ${color} 0%, ${color}cc 100%)">
         <div class="cd-card-visual-top">
-          <span class="cd-card-visual-bank">${c.bank_name}</span>
+          <span class="cd-card-visual-bank">${escapeHtml(c.bank_name)}</span>
           <span class="cd-card-remove" data-remove="${c.id}">&times;</span>
         </div>
-        <div class="cd-card-visual-name">${c.card_name}</div>
+        <div class="cd-card-visual-name">${escapeHtml(c.card_name)}</div>
         <div class="cd-card-visual-bottom">
           <span class="cd-card-visual-dots">•••• •••• •••• ••••</span>
           <span class="cd-card-visual-fee">${feeText}</span>
         </div>
       </div>
-      ${c.note ? `<div class="cd-card-note">${c.note}</div>` : ""}
+      ${c.note ? `<div class="cd-card-note">${escapeHtml(c.note)}</div>` : ""}
       <div class="cd-card-rewards" id="rewards-${c.id}">
         <div class="cd-loading">載入優惠中...</div>
       </div>
@@ -67,13 +67,13 @@ function _renderRewardsInto(cardId, rewards) {
       ? `<div class="cd-reward-tile-cap">上限 $${r.reward_cap}/月</div>`
       : "";
     const condHtml = r.conditions
-      ? `<div class="cd-reward-tile-cond">${r.conditions}</div>`
+      ? `<div class="cd-reward-tile-cond">${escapeHtml(r.conditions)}</div>`
       : "";
 
     html += `
       <div class="cd-reward-tile">
         <div class="cd-reward-tile-rate ${rateClass}">${r.reward_rate}%</div>
-        <div class="cd-reward-tile-cat">${r.category_name}</div>
+        <div class="cd-reward-tile-cat">${escapeHtml(r.category_name)}</div>
         <div class="cd-reward-tile-type">${typeLabel}</div>
         ${capHtml}${condHtml}
       </div>`;
@@ -222,8 +222,8 @@ CardsPage.init = () => {
               <span>${bank.substring(0, 1)}</span>
             </div>
             <div class="modal-card-info">
-              <div class="modal-card-name">${c.card_name}</div>
-              <div class="modal-card-bank">${bank}</div>
+              <div class="modal-card-name">${escapeHtml(c.card_name)}</div>
+              <div class="modal-card-bank">${escapeHtml(bank)}</div>
             </div>
             <button class="modal-card-btn ${isAdded ? "added" : ""}"
               data-card-id="${c.id}">${isAdded ? "已新增" : "新增"}</button>

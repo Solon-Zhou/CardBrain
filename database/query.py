@@ -61,6 +61,53 @@ def recommend_by_merchant(merchant_name: str, user_card_ids: list[int] | None = 
     return results
 
 
+def recommend_by_merchants_batch(merchant_names: list[str]) -> dict[str, list[dict]]:
+    """
+    批次查詢多個商家的推薦卡片（一次 DB 查詢取代 N 次）。
+    merchant_names 必須是精確的 DB 商家名稱（已經過 alias 對照）。
+    回傳: {商家名稱: [推薦清單（依回饋率降序）]}
+    """
+    if not merchant_names:
+        return {}
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    placeholders = ",".join("?" * len(merchant_names))
+    query = f"""
+        SELECT
+            c.id AS card_id,
+            b.name AS bank_name,
+            c.card_name,
+            r.reward_type,
+            r.reward_rate,
+            r.reward_cap,
+            r.conditions,
+            cat.name AS category_name,
+            m.name AS merchant_name
+        FROM merchants m
+        JOIN categories cat ON m.category_id = cat.id
+        JOIN rewards r ON r.category_id = cat.id
+        JOIN cards c ON r.card_id = c.id
+        JOIN banks b ON c.bank_id = b.id
+        WHERE m.name IN ({placeholders})
+        ORDER BY m.name, r.reward_rate DESC
+    """
+
+    cursor.execute(query, merchant_names)
+
+    result: dict[str, list[dict]] = {}
+    for row in cursor.fetchall():
+        d = dict(row)
+        name = d["merchant_name"]
+        if name not in result:
+            result[name] = []
+        result[name].append(d)
+
+    conn.close()
+    return result
+
+
 def recommend_by_category(category_name: str):
     """依消費分類查詢最佳卡片"""
     conn = get_conn()

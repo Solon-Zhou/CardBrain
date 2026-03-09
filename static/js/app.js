@@ -12,6 +12,8 @@
     "/result": ResultPage,
   };
 
+  let _currentPage = null;
+
   // ── Tab Bar Active State ──
   function updateActiveTab(path) {
     document.querySelectorAll("#tabBar .tab-item").forEach((tab) => {
@@ -46,6 +48,11 @@
 
     updateActiveTab(path);
 
+    // 清理前一頁的資源（Geo、Leaflet、事件監聽器等）
+    if (_currentPage && _currentPage.destroy) {
+      _currentPage.destroy();
+    }
+
     container.innerHTML = '<div class="spinner">載入中...</div>';
     container.className = "page-enter";
 
@@ -53,6 +60,7 @@
       const html = await render(params);
       container.innerHTML = html;
       container.className = "page-enter";
+      _currentPage = render;
       if (render.init) render.init(params);
     } catch (e) {
       console.error(e);
