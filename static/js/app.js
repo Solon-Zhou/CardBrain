@@ -55,6 +55,7 @@
 
     container.innerHTML = '<div class="spinner">載入中...</div>';
     container.className = "page-enter";
+    container.scrollTop = 0;
 
     try {
       const html = await render(params);
