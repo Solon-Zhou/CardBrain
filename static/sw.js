@@ -1,4 +1,4 @@
-const CACHE_NAME = "cardbrain-v34";
+const CACHE_NAME = "cardbrain-v35";
 const PRECACHE = [
   "/",
   "/static/css/style.css",

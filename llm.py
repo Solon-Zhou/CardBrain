@@ -6,6 +6,7 @@ LLM 只做 NLU（意圖解析），不做數學計算。
 """
 
 import json
+import logging
 import os
 import re
 
@@ -55,8 +56,8 @@ def generate_reply(mode: str, intent: dict, brain_result: dict) -> str:
     if LLM_API_KEY and LLM_PROVIDER:
         try:
             return _llm_reply(mode, intent, brain_result)
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning("LLM reply fallback to template: %s", e)
     return _template_reply(mode, intent, brain_result)
 
 
@@ -171,8 +172,8 @@ def extract_intent(user_input: str) -> dict:
     if LLM_API_KEY and LLM_PROVIDER:
         try:
             return _llm_extract(user_input)
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning("LLM extract fallback to rules: %s", e)
     return _rule_extract(user_input)
 
 

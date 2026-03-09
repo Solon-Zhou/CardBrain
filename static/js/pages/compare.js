@@ -271,3 +271,7 @@ ComparePage.init = () => {
     runCompare();
   });
 };
+
+ComparePage.destroy = () => {
+  _cmpAllCards = null;
+};

@@ -4,6 +4,7 @@ CardBrain PWA — FastAPI 後端
 """
 
 import json
+import logging
 import math
 import os
 import time
@@ -60,9 +61,10 @@ app.add_middleware(
 
 BASE = Path(__file__).parent
 
-# ── Nearby cache（5 分鐘 TTL）────────────────────────
+# ── Nearby cache（5 分鐘 TTL，上限 100 條目）─────────
 _nearby_cache: dict[str, tuple[float, list]] = {}
 _NEARBY_TTL = 300  # seconds
+_NEARBY_CACHE_MAX = 100
 
 
 # ── API ──────────────────────────────────────────────
@@ -305,7 +307,12 @@ def api_nearby(
     # 按距離排序
     matched.sort(key=lambda x: x["distance_m"])
 
-    # 寫入 cache
+    # 寫入 cache（先清理過期條目，超過上限則全部清空）
+    expired = [k for k, (t, _) in _nearby_cache.items() if now - t >= _NEARBY_TTL]
+    for k in expired:
+        del _nearby_cache[k]
+    if len(_nearby_cache) >= _NEARBY_CACHE_MAX:
+        _nearby_cache.clear()
     _nearby_cache[cache_key] = (now, matched)
 
     return _filter_nearby(matched, card_ids, actual_lat, actual_lng)
@@ -383,7 +390,8 @@ def _query_google_places(lat: float, lng: float) -> list[dict]:
                 }
                 for p in places
             ]
-    except Exception:
+    except Exception as e:
+        logging.warning("Google Places API error: %s", e)
         return []
 
 
@@ -413,7 +421,8 @@ out center tags;"""
                 }
                 for e in elements
             ]
-    except Exception:
+    except Exception as e:
+        logging.warning("Overpass API error: %s", e)
         return []
 
 

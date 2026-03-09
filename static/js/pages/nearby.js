@@ -162,8 +162,14 @@ NearbyPage.init = () => {
   document.getElementById("btnGrantLocation").addEventListener("click", () => {
     _startGeo();
   });
-};
 
-NearbyPage.destroy = () => {
-  Geo.stopWatching();
+  // destroy 定義在 init 閉包內，才能存取 _nearbyMap
+  NearbyPage.destroy = () => {
+    Geo.stopWatching();
+    if (_nearbyMap) {
+      _nearbyMap.remove();
+      _nearbyMap = null;
+      _mapLayerGroup = null;
+    }
+  };
 };
