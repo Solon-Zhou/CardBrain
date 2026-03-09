@@ -197,7 +197,6 @@ CardsPage.init = () => {
   function openModal() {
     modal.classList.add("show");
     cardSearchInput.value = "";
-    cardSearchInput.focus();
     renderModalList("");
   }
 

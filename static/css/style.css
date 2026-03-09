@@ -652,7 +652,7 @@ body {
 .agent-section {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--header-height) - var(--tab-height) - var(--safe-bottom));
+  height: calc(100dvh - var(--header-height) - var(--safe-top) - var(--tab-height) - var(--safe-bottom) - 24px);
   margin: -16px -16px 0;
   padding: 0 16px;
 }

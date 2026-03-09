@@ -87,7 +87,6 @@ ComparePage.init = () => {
     activeSlot = slotIndex;
     modal.classList.add("show");
     searchInput.value = "";
-    searchInput.focus();
     renderModalList("");
   }
 
