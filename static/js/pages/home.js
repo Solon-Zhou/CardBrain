@@ -80,22 +80,24 @@ HomePage.init = () => {
     try {
       const res = await API.agent(text);
       removeTyping();
-      const replyHtml = formatReply(res.reply || "抱歉，我無法理解你的問題。");
-
-      let extraHtml = "";
-      if (res.data && !res.data.error) {
-        extraHtml = _buildDataCard(res.mode, res.data);
+      if (!res || typeof res !== "object") {
+        addBubble("bot", "抱歉，收到了異常的回應格式。");
+      } else {
+        const replyHtml = formatReply(res.reply || "抱歉，我無法理解你的問題。");
+        let extraHtml = "";
+        if (res.data && typeof res.data === "object" && !res.data.error) {
+          extraHtml = _buildDataCard(res.mode, res.data);
+        }
+        addBubble("bot", replyHtml + extraHtml);
       }
-
-      addBubble("bot", replyHtml + extraHtml);
     } catch (err) {
       removeTyping();
       addBubble("bot", "抱歉，發生了一點問題，請稍後再試。");
+    } finally {
+      _sending = false;
+      sendBtn.disabled = false;
+      agentInput.focus();
     }
-
-    _sending = false;
-    sendBtn.disabled = false;
-    agentInput.focus();
   }
 
   agentInput.addEventListener("keydown", (e) => {

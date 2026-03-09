@@ -19,7 +19,9 @@ const REWARD_TYPE_LABEL = {
 };
 
 let _allCards = null;
+let _allCardsTime = 0;
 const _rewardsCache = {};
+const _CARDS_CACHE_TTL = 300000; // 5 分鐘
 
 function _buildCardHtml(c) {
   const color = BANK_COLORS[c.bank_name] || "#555";
@@ -86,6 +88,9 @@ function _renderRewardsInto(cardId, rewards) {
 async function _loadAndRenderRewards(cardId) {
   try {
     if (!_rewardsCache[cardId]) {
+      if (Object.keys(_rewardsCache).length >= 50) {
+        for (const k in _rewardsCache) { delete _rewardsCache[k]; break; }
+      }
       _rewardsCache[cardId] = await API.getCardRewards(cardId);
     }
     _renderRewardsInto(cardId, _rewardsCache[cardId]);
@@ -96,8 +101,12 @@ async function _loadAndRenderRewards(cardId) {
 }
 
 async function CardsPage() {
-  const allCards = await (_allCards || API.getCards());
-  _allCards = allCards;
+  const now = Date.now();
+  if (!_allCards || now - _allCardsTime > _CARDS_CACHE_TTL) {
+    _allCards = await API.getCards();
+    _allCardsTime = now;
+  }
+  const allCards = _allCards;
 
   const myIds = Store.getMyCards();
   const myCards = allCards.filter((c) => myIds.includes(c.id));

@@ -28,8 +28,8 @@ function _renderCard(r, rank, isTop) {
   return `
     <div class="result-card ${isTop ? "top" : ""}" data-rate="${r.reward_rate}" data-cap="${r.reward_cap || ""}" data-type="${r.reward_type}">
       <span class="result-rank">${rank}</span>
-      <div class="result-bank">${r.bank_name}</div>
-      <div class="result-name">${r.card_name}</div>
+      <div class="result-bank">${escapeHtml(r.bank_name)}</div>
+      <div class="result-name">${escapeHtml(r.card_name)}</div>
       <div class="result-rate">${r.reward_rate}%
         <span class="result-rate-unit">${badgeLbl}</span>
       </div>
@@ -41,9 +41,9 @@ function _renderCard(r, rank, isTop) {
       </div>
       <div class="result-meta">
         <span class="result-badge ${badgeCls}">${badgeLbl}</span>
-        ${capStr}${condStr ? " · " + condStr : ""}
+        ${capStr}${condStr ? " · " + escapeHtml(condStr) : ""}
       </div>
-      ${r.category_name ? `<div class="result-meta">分類：${r.category_name}</div>` : ""}
+      ${r.category_name ? `<div class="result-meta">分類：${escapeHtml(r.category_name)}</div>` : ""}
     </div>`;
 }
 
@@ -61,20 +61,21 @@ async function ResultPage(params) {
   const { type, q, category_id, name } = params;
   const myIds = Store.getMyCards();
 
-  let results = [];
+  let allResults = [];
   let title = "";
 
+  // 一次查詢全部結果，再由前端分組（避免重複 API 呼叫）
   if (type === "merchant" && q) {
-    title = `「${q}」推薦卡片`;
-    results = await API.recommendByMerchant(q, myIds);
+    title = `「${escapeHtml(q)}」推薦卡片`;
+    allResults = await API.recommendByMerchant(q, []);
   } else if (type === "category" && category_id) {
-    title = `「${name || "分類"}」推薦卡片`;
-    results = await API.recommendByCategory(category_id, myIds);
+    title = `「${escapeHtml(name || "分類")}」推薦卡片`;
+    allResults = await API.recommendByCategory(category_id, []);
   }
 
-  results = _dedup(results);
+  allResults = _dedup(allResults);
 
-  if (!results.length) {
+  if (!allResults.length) {
     return `
       <a class="back-link" href="#/">← 返回首頁</a>
       <div class="result-header">${title}</div>
@@ -85,15 +86,7 @@ async function ResultPage(params) {
   let otherSection = "";
 
   if (myIds.length) {
-    let allResults = [];
-    if (type === "merchant" && q) {
-      allResults = await API.recommendByMerchant(q, []);
-    } else if (type === "category" && category_id) {
-      allResults = await API.recommendByCategory(category_id, []);
-    }
-    allResults = _dedup(allResults);
-
-    const myResults = results;
+    const myResults = allResults.filter((r) => myIds.includes(r.card_id));
     const otherResults = allResults.filter(
       (r) => !myIds.includes(r.card_id)
     );
@@ -113,7 +106,7 @@ async function ResultPage(params) {
         .join("");
     }
   } else {
-    mySection = results
+    mySection = allResults
       .map((r, i) => _renderCard(r, i + 1, i === 0))
       .join("");
   }

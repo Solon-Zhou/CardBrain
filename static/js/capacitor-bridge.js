@@ -86,7 +86,6 @@ const CapBridge = (() => {
         }
       );
 
-      console.log("[CapBridge] BackgroundGeolocation watcher started");
     } catch (e) {
       console.warn("[CapBridge] BackgroundGeolocation init error:", e);
       _fallbackForegroundWatch();

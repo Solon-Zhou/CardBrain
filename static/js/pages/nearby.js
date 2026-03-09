@@ -137,6 +137,8 @@ NearbyPage.init = () => {
     }
   }
 
+  let _isDenied = false;
+
   if (!("geolocation" in navigator)) {
     permissionEl.querySelector(".nearby-permission-text").textContent = "您的瀏覽器不支援定位功能";
     permissionEl.querySelector(".nearby-permission-btn").style.display = "none";
@@ -151,7 +153,7 @@ NearbyPage.init = () => {
         if (result.state === "denied") {
           permissionEl.querySelector(".nearby-permission-text").textContent = "定位權限已被封鎖，請至瀏覽器設定中開啟";
           permissionEl.querySelector(".nearby-permission-btn").textContent = "重新整理";
-          document.getElementById("btnGrantLocation").addEventListener("click", () => location.reload());
+          _isDenied = true;
         }
       }
     });
@@ -160,7 +162,11 @@ NearbyPage.init = () => {
   }
 
   document.getElementById("btnGrantLocation").addEventListener("click", () => {
-    _startGeo();
+    if (_isDenied) {
+      location.reload();
+    } else {
+      _startGeo();
+    }
   });
 
   // destroy 定義在 init 閉包內，才能存取 _nearbyMap

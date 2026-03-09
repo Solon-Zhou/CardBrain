@@ -14,6 +14,7 @@ import re
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")  # "gemini", "openai", or "anthropic"
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "")
+_LLM_TIMEOUT = 15  # 所有 LLM provider 統一超時秒數
 
 _SYSTEM_PROMPT = """你是 CardBrain 的意圖解析器。使用者會用中文自然語言描述消費或旅遊計畫。
 請分析使用者輸入，回傳 JSON（不要包含其他文字）：
@@ -74,7 +75,7 @@ def _llm_reply(mode: str, intent: dict, brain_result: dict) -> str:
             "contents": [{"parts": [{"text": user_msg}]}],
             "generationConfig": {"temperature": 0.7, "maxOutputTokens": 400},
         }
-        resp = httpx.post(url, json=payload, timeout=15)
+        resp = httpx.post(url, json=payload, timeout=_LLM_TIMEOUT)
         resp.raise_for_status()
         return resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
@@ -91,7 +92,7 @@ def _llm_reply(mode: str, intent: dict, brain_result: dict) -> str:
             "temperature": 0.7,
             "max_tokens": 400,
         }
-        resp = httpx.post(url, headers=headers, json=payload, timeout=10)
+        resp = httpx.post(url, headers=headers, json=payload, timeout=_LLM_TIMEOUT)
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"].strip()
 
@@ -106,7 +107,7 @@ def _llm_reply(mode: str, intent: dict, brain_result: dict) -> str:
             "temperature": 0.7,
             "max_tokens": 400,
         }
-        resp = httpx.post(url, headers=headers, json=payload, timeout=10)
+        resp = httpx.post(url, headers=headers, json=payload, timeout=_LLM_TIMEOUT)
         resp.raise_for_status()
         return resp.json()["content"][0]["text"].strip()
 
@@ -194,7 +195,7 @@ def _llm_extract(user_input: str) -> dict:
                 "responseMimeType": "application/json",
             },
         }
-        resp = httpx.post(url, json=payload, timeout=15)
+        resp = httpx.post(url, json=payload, timeout=_LLM_TIMEOUT)
         resp.raise_for_status()
         content = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
         return _parse_json_response(content)
@@ -215,7 +216,7 @@ def _llm_extract(user_input: str) -> dict:
             "temperature": 0,
             "max_tokens": 500,
         }
-        resp = httpx.post(url, headers=headers, json=payload, timeout=10)
+        resp = httpx.post(url, headers=headers, json=payload, timeout=_LLM_TIMEOUT)
         resp.raise_for_status()
         content = resp.json()["choices"][0]["message"]["content"]
         return _parse_json_response(content)
@@ -235,7 +236,7 @@ def _llm_extract(user_input: str) -> dict:
             "temperature": 0,
             "max_tokens": 500,
         }
-        resp = httpx.post(url, headers=headers, json=payload, timeout=10)
+        resp = httpx.post(url, headers=headers, json=payload, timeout=_LLM_TIMEOUT)
         resp.raise_for_status()
         content = resp.json()["content"][0]["text"]
         return _parse_json_response(content)
