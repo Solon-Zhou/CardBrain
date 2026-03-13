@@ -45,13 +45,16 @@ def instant_recommend(
     merchant_name: str,
     amount: float,
     user_card_ids: list[int] | None = None,
+    category: str | None = None,
 ) -> dict:
     """
     即時推薦：給商家 + 金額，回傳按實際回饋金額排序的卡片清單。
+    fallback 路徑：商家 → category 分類 → 國內一般消費
     """
     recs = recommend_by_merchant(merchant_name, user_card_ids)
+    if not recs and category:
+        recs = _query_by_category_name(category, user_card_ids)
     if not recs:
-        # fallback: 查「國內一般消費」分類
         recs = _fallback_general(user_card_ids)
 
     results = _enrich_with_actual_reward(recs, amount)
