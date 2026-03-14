@@ -53,20 +53,22 @@ category 必須從以下選項中選擇（若無法判斷則省略）：
 
 _REPLY_SYSTEM_PROMPT = """你是 CardBrain 智慧刷卡助手。根據提供的精算結果，用親切的繁體中文回覆使用者。
 
-⚠️ 最重要規則 — 數字精確度：
-- 訊息開頭會有【關鍵數據】區塊，裡面的金額必須原封不動使用，禁止自行換算或省略位數
+⚠️ 最重要規則 — 必須包含所有精算數據：
+- 【關鍵數據】裡的每一筆金額和卡片名稱都必須出現在回覆中，不可省略
+- 金額必須原封不動引用，禁止自行換算或省略位數
 - 「消費金額」和「回饋金額」是完全不同的數字，絕對不要搞混
-- 例：消費 $1,000 回饋 $12.0 → 不可以寫成「消費 $12」或「消費 $10」
 
-其他規則：
-- 直接講結論，不要囉唆
+回覆格式要求（依模式）：
+1. 即時推薦：說出最佳卡 + 回饋金額，有第二推薦也要列出。若有「更好選擇」必須提到。
+2. 旅遊規劃：列出帶卡清單（每張卡用途）+ 總省錢金額。若有「更好選擇」逐項列出可多省多少。
+3. 多筆消費：每筆都要列出推薦卡 + 回饋。若有「更好選擇」也要提到。
+4. 後悔計算：強調少賺金額，語氣帶點惋惜但鼓勵。
+
+語氣與格式：
+- 先講結論和數據，再加一句親切的話
 - 金額用 $ 符號，保留小數點後一位
-- 若有最佳卡片，先說最佳卡 + 回饋金額
-- 若有多張卡比較，簡要列出前 2-3 張
-- 若是旅遊規劃，列出帶卡清單 + 總省錢金額
-- 若是後悔計算，強調少賺金額，語氣帶點惋惜但鼓勵
 - 不要用 markdown 格式，用純文字 + emoji
-- 回覆控制在 200 字以內"""
+- 回覆控制在 400 字以內"""
 
 
 def generate_reply(mode: str, intent: dict, brain_result: dict) -> str:
@@ -74,17 +76,12 @@ def generate_reply(mode: str, intent: dict, brain_result: dict) -> str:
     將 brain 精算結果包裝成自然語言回覆。
     有 API key 時呼叫 LLM，否則用模板式 fallback。
     """
-    reply_source = "template(no_key)"
     if LLM_API_KEY and LLM_PROVIDER:
         try:
-            reply = _llm_call_with_retry(_llm_reply, mode, intent, brain_result)
-            reply_source = "llm"
-            return f"{reply}\n\n🔍 debug: intent={intent.get('_source','?')} reply={reply_source}"
+            return _llm_call_with_retry(_llm_reply, mode, intent, brain_result)
         except Exception as e:
             logging.warning("LLM reply fallback to template: %s", e)
-            reply_source = f"template(llm_err:{_safe_error(e)})"
-    reply = _template_reply(mode, intent, brain_result)
-    return f"{reply}\n\n🔍 debug: intent={intent.get('_source','?')} reply={reply_source}"
+    return _template_reply(mode, intent, brain_result)
 
 
 def _build_reply_summary(mode: str, intent: dict, brain_result: dict) -> str:
@@ -160,7 +157,7 @@ def _llm_reply(mode: str, intent: dict, brain_result: dict) -> str:
         payload = {
             "system_instruction": {"parts": [{"text": _REPLY_SYSTEM_PROMPT}]},
             "contents": [{"parts": [{"text": user_msg}]}],
-            "generationConfig": {"temperature": 0.7, "maxOutputTokens": 400},
+            "generationConfig": {"temperature": 0.3, "maxOutputTokens": 600},
         }
         resp = httpx.post(url, json=payload, timeout=_LLM_TIMEOUT)
         resp.raise_for_status()
@@ -286,14 +283,6 @@ def _template_reply(mode: str, intent: dict, brain_result: dict) -> str:
     return "已收到你的查詢，但我不確定該如何回覆。請試試輸入商家+金額，或旅遊目的地+預算。"
 
 
-def _safe_error(e: Exception) -> str:
-    """將錯誤訊息中的 API key 遮蔽。"""
-    msg = str(e)
-    if LLM_API_KEY and len(LLM_API_KEY) > 8:
-        msg = msg.replace(LLM_API_KEY, "***")
-    return msg
-
-
 def _llm_call_with_retry(fn, *args, max_retries=2):
     """LLM 呼叫 + 429 自動重試。"""
     import time
@@ -313,17 +302,10 @@ def extract_intent(user_input: str) -> dict:
     """
     if LLM_API_KEY and LLM_PROVIDER:
         try:
-            result = _llm_call_with_retry(_llm_extract, user_input)
-            result["_source"] = "llm"
-            return result
+            return _llm_call_with_retry(_llm_extract, user_input)
         except Exception as e:
             logging.warning("LLM extract fallback to rules: %s", e)
-            result = _rule_extract(user_input)
-            result["_source"] = f"rule(llm_err:{_safe_error(e)})"
-            return result
-    result = _rule_extract(user_input)
-    result["_source"] = "rule(no_key)"
-    return result
+    return _rule_extract(user_input)
 
 
 # ── LLM 解析（httpx） ────────────────────────────
