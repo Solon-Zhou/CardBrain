@@ -48,22 +48,48 @@ def instant_recommend(
     category: str | None = None,
 ) -> dict:
     """
-    即時推薦：給商家 + 金額，回傳按實際回饋金額排序的卡片清單。
+    即時推薦：給商家 + 金額。
+    1. 從使用者的卡中找最佳 → my_results
+    2. 從全部卡中找最佳 → 若比使用者的更好，附上 better_card
     fallback 路徑：商家 → category 分類 → 國內一般消費
     """
-    recs = recommend_by_merchant(merchant_name, user_card_ids)
-    if not recs and category:
-        recs = _query_by_category_name(category, user_card_ids)
-    if not recs:
-        recs = _fallback_general(user_card_ids)
+    def _query(card_ids):
+        recs = recommend_by_merchant(merchant_name, card_ids)
+        if not recs and category:
+            recs = _query_by_category_name(category, card_ids)
+        if not recs:
+            recs = _fallback_general(card_ids)
+        results = _enrich_with_actual_reward(recs, amount)
+        results.sort(key=lambda x: x["actual_reward"], reverse=True)
+        return results
 
-    results = _enrich_with_actual_reward(recs, amount)
-    results.sort(key=lambda x: x["actual_reward"], reverse=True)
+    # 使用者的卡
+    my_results = _query(user_card_ids) if user_card_ids else []
+    my_best_reward = my_results[0]["actual_reward"] if my_results else 0
+
+    # 全市場最佳
+    all_results = _query(None)
+
+    # 找出比使用者最佳更好的「其他卡」
+    better_card = None
+    if all_results:
+        top = all_results[0]
+        is_user_card = user_card_ids and top["card_id"] in user_card_ids
+        if top["actual_reward"] > my_best_reward and not is_user_card:
+            better_card = {
+                "card_id": top["card_id"],
+                "bank_name": top["bank_name"],
+                "card_name": top["card_name"],
+                "reward_rate": top["reward_rate"],
+                "actual_reward": top["actual_reward"],
+                "extra_reward": round(top["actual_reward"] - my_best_reward, 2),
+            }
 
     return {
         "merchant": merchant_name,
         "amount": amount,
-        "results": results,
+        "results": my_results if my_results else all_results,
+        "better_card": better_card,
     }
 
 
