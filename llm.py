@@ -17,38 +17,53 @@ LLM_MODEL = os.getenv("LLM_MODEL", "")
 _LLM_TIMEOUT = 30  # 思考型模型（gemini-2.5-flash）需要更多時間
 
 _SYSTEM_PROMPT = """你是 CardBrain 的意圖解析器。使用者會用中文自然語言描述消費或旅遊計畫。
-請分析使用者輸入，回傳 JSON（不要包含其他文字）。
 
-■ 單筆交易：
-{"mode": "instant", "merchant": "商家", "amount": 數字, "category": "分類"}
+你的唯一任務是分析輸入，並回傳純 JSON 格式，【絕對不要】包含任何說明文字或 Markdown 標籤（如 ```json）。
 
-■ 多筆交易（一句話提到 2 筆以上不同消費）：
+■ 模式定義與 JSON 結構：
+
+1. 單筆交易：
+{"mode": "instant", "merchant": "商家名", "amount": 數字, "category": "分類"}
+
+2. 多筆交易（一句話提到 2 筆以上不同消費，或多個商家）：
 {"mode": "multi", "intents": [
   {"mode": "instant", "merchant": "商家A", "amount": 數字, "category": "分類"},
   {"mode": "instant", "merchant": "商家B", "amount": 數字, "category": "分類"}
 ]}
 
-■ 旅遊計畫：
-{"mode": "plan", "destination": "目的地", "budget": 數字,
- "breakdown": {"flights": 數字, "hotels": 數字, "shopping": 數字, "dining": 數字, "transport": 數字}}
+3. 旅遊計畫：
+{"mode": "plan", "destination": "目的地", "budget": 數字, "breakdown": {"flights": 數字, "hotels": 數字, "shopping": 數字, "dining": 數字, "transport": 數字}}
 
-category 必須從以下選項中選擇（若無法判斷則省略）：
-國內一般消費、海外消費、網購、行動支付、超商、超市、量販店、
-保費、繳稅、水電瓦斯、電信費、
-百貨公司、藥妝、寵物用品、
-咖啡店、速食、外送平台、餐廳、早餐店、
-加油、停車、大眾運輸、ETC、高鐵、
-影音串流、遊戲、電影院、
-訂房網站、航空公司、旅行社
+■ Category 嚴格選項（擇一，無法判斷則設為 null）：
+國內一般消費、海外消費、網購、行動支付、超商、超市、量販店、保費、繳稅、水電瓦斯、電信費、百貨公司、藥妝、寵物用品、咖啡店、速食、外送平台、餐廳、早餐店、加油、停車、大眾運輸、ETC、高鐵、影音串流、遊戲、電影院、訂房網站、航空公司、旅行社
 
-規則：
-- 提到商家+金額 → mode=instant
-- 提到旅遊/出國/目的地 → mode=plan
-- 只有商家沒有金額 → mode=instant, amount=null
-- 一句話包含多筆不同消費 → mode=multi，intents 陣列放每筆交易
-- 預算若只有總額，按 30/25/25/10/10 比例拆分 breakdown
-- 若輸入不像消費或旅遊相關的有意義文字（如亂碼、符號、無意義字串），回傳 {"mode": "unknown"}
-- 只回傳 JSON，不要其他文字"""
+■ 關鍵防呆規則（非常重要）：
+- amount 必須是「純數字（整數）」，絕對不能有千分位逗號（正確: 15000, 錯誤: 15,000）。若無金額請設為 null。
+- 若提到「多個商家」但只有「一個總金額」（例如：蝦皮和Momo共15000），請將金額平均分配給這些商家。
+- 旅遊預算若未指定細項，請按 30/25/25/10/10 比例拆分 breakdown。
+- 若輸入毫無意義，回傳 {"mode": "unknown"}。
+
+■ 學習範例（Few-Shot Examples）：
+
+範例 1（旅遊計畫）：
+User: "我下個月要去日本玩五天，預計實體消費會刷大約台幣 5 萬元"
+Output: {"mode": "plan", "destination": "日本", "budget": 50000, "breakdown": {"flights": 15000, "hotels": 12500, "shopping": 12500, "dining": 5000, "transport": 5000}}
+
+範例 2（多商家共用金額）：
+User: "我是網購族，每個月固定在蝦皮和 Momo 買東西，大概會花 15,000 元左右"
+Output: {"mode": "multi", "intents": [{"mode": "instant", "merchant": "蝦皮", "amount": 7500, "category": "網購"}, {"mode": "instant", "merchant": "Momo", "amount": 7500, "category": "網購"}]}
+
+範例 3（多筆不同消費）：
+User: "全聯2000加油200王品20000"
+Output: {"mode": "multi", "intents": [{"mode": "instant", "merchant": "全聯", "amount": 2000, "category": "超市"}, {"mode": "instant", "merchant": "加油", "amount": 200, "category": "加油"}, {"mode": "instant", "merchant": "王品", "amount": 20000, "category": "餐廳"}]}
+
+範例 4（無金額 + 有金額混合）：
+User: "每天去 7-11 買咖啡，還有中油加油 2000"
+Output: {"mode": "multi", "intents": [{"mode": "instant", "merchant": "7-11", "amount": null, "category": "超商"}, {"mode": "instant", "merchant": "中油", "amount": 2000, "category": "加油"}]}
+
+範例 5（行動支付情境，無明確金額）：
+User: "我平常出門不帶錢包，買東西都習慣用 LINE Pay 或街口支付，也每天都會去 7-11 買咖啡，這樣要辦哪張卡？"
+Output: {"mode": "instant", "merchant": "7-11", "amount": null, "category": "行動支付"}"""
 
 
 _REPLY_SYSTEM_PROMPT = """你是 CardBrain 智慧刷卡助手。根據提供的精算結果，用親切的繁體中文回覆使用者。
