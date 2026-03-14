@@ -77,12 +77,12 @@ def generate_reply(mode: str, intent: dict, brain_result: dict) -> str:
     reply_source = "template(no_key)"
     if LLM_API_KEY and LLM_PROVIDER:
         try:
-            reply = _llm_reply(mode, intent, brain_result)
+            reply = _llm_call_with_retry(_llm_reply, mode, intent, brain_result)
             reply_source = "llm"
             return f"{reply}\n\n🔍 debug: intent={intent.get('_source','?')} reply={reply_source}"
         except Exception as e:
             logging.warning("LLM reply fallback to template: %s", e)
-            reply_source = f"template(llm_error:{e})"
+            reply_source = f"template(llm_err:{_safe_error(e)})"
     reply = _template_reply(mode, intent, brain_result)
     return f"{reply}\n\n🔍 debug: intent={intent.get('_source','?')} reply={reply_source}"
 
@@ -286,19 +286,40 @@ def _template_reply(mode: str, intent: dict, brain_result: dict) -> str:
     return "已收到你的查詢，但我不確定該如何回覆。請試試輸入商家+金額，或旅遊目的地+預算。"
 
 
+def _safe_error(e: Exception) -> str:
+    """將錯誤訊息中的 API key 遮蔽。"""
+    msg = str(e)
+    if LLM_API_KEY and len(LLM_API_KEY) > 8:
+        msg = msg.replace(LLM_API_KEY, "***")
+    return msg
+
+
+def _llm_call_with_retry(fn, *args, max_retries=2):
+    """LLM 呼叫 + 429 自動重試。"""
+    import time
+    for attempt in range(max_retries + 1):
+        try:
+            return fn(*args)
+        except Exception as e:
+            if "429" in str(e) and attempt < max_retries:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            raise
+
+
 def extract_intent(user_input: str) -> dict:
     """
     解析自然語言意圖。有 LLM API key 時用 LLM，否則降級為規則式解析。
     """
     if LLM_API_KEY and LLM_PROVIDER:
         try:
-            result = _llm_extract(user_input)
+            result = _llm_call_with_retry(_llm_extract, user_input)
             result["_source"] = "llm"
             return result
         except Exception as e:
             logging.warning("LLM extract fallback to rules: %s", e)
             result = _rule_extract(user_input)
-            result["_source"] = f"rule(llm_error:{e})"
+            result["_source"] = f"rule(llm_err:{_safe_error(e)})"
             return result
     result = _rule_extract(user_input)
     result["_source"] = "rule(no_key)"
