@@ -1,4 +1,5 @@
 # routes/agent.py — Agent + Brain endpoints
+import logging
 from fastapi import APIRouter, Request
 from brain import (
     instant_recommend,
@@ -98,6 +99,7 @@ async def api_agent(request: Request):
     # 1. 意圖解析
     intent = extract_intent(message)
     mode = intent.get("mode", "instant")
+    logging.info("🧠 intent | input=%r | mode=%s | result=%s", message, mode, intent)
 
     # 無法辨識的輸入 → 直接回傳引導訊息，不呼叫 brain
     if mode == "unknown":
@@ -134,5 +136,6 @@ async def api_agent(request: Request):
 
     # 3. 生成自然語言回覆
     reply = generate_reply(mode, intent, data)
+    logging.info("🧠 brain  | mode=%s | data_keys=%s", mode, list(data.keys()) if isinstance(data, dict) else "N/A")
 
     return {"reply": reply, "mode": mode, "data": data}

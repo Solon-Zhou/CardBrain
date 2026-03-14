@@ -10,11 +10,28 @@ from database.query import (
     get_conn,
 )
 
-# ── 行程規劃：消費類別 → DB 分類名稱映射 ──────────────
-TRIP_CATEGORY_MAPPING = {
+# ── 行程規劃：海外 vs 國內 ──────────────────────────
+OVERSEAS_DESTINATIONS = {
+    "日本", "韓國", "泰國", "美國", "歐洲", "英國", "法國", "德國",
+    "東京", "大阪", "京都", "首爾", "曼谷", "沖繩", "北海道",
+    "新加坡", "馬來西亞", "越南", "香港", "澳門", "澳洲", "紐西蘭",
+    "加拿大", "夏威夷", "峇里島", "長灘島",
+}
+
+# 海外行程的分類映射
+OVERSEAS_TRIP_MAPPING = {
     "flights": "航空公司",
     "hotels": "訂房網站",
     "shopping": "海外消費",
+    "dining": "餐廳",
+    "transport": "大眾運輸",
+}
+
+# 國內行程的分類映射（購物走國內一般、交通走高鐵/大眾運輸）
+DOMESTIC_TRIP_MAPPING = {
+    "flights": "高鐵",       # 國內通常搭高鐵/台鐵
+    "hotels": "訂房網站",
+    "shopping": "國內一般消費",
     "dining": "餐廳",
     "transport": "大眾運輸",
 }
@@ -204,7 +221,12 @@ def plan_trip(
             "transport": round(total_budget * 0.10),
         }
 
-    # 查詢目的地是否有對應特殊分類
+    # 判斷海外 vs 國內 → 選擇對應的分類映射
+    is_overseas = destination in OVERSEAS_DESTINATIONS
+    trip_mapping = OVERSEAS_TRIP_MAPPING if is_overseas else DOMESTIC_TRIP_MAPPING
+    fallback_cat = "海外消費" if is_overseas else "國內一般消費"
+
+    # 查詢目的地是否有對應特殊分類（日本消費、韓國消費…）
     country_cat = COUNTRY_CATEGORIES.get(destination)
 
     category_results = []
@@ -216,7 +238,7 @@ def plan_trip(
         if amount <= 0:
             continue
 
-        cat_name = TRIP_CATEGORY_MAPPING.get(key, "海外消費")
+        cat_name = trip_mapping.get(key, fallback_cat)
         cat_label = _category_label(key)
 
         def _query_cat(card_ids):

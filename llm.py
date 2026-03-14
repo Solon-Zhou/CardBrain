@@ -467,8 +467,18 @@ def _guess_category(text: str) -> str | None:
 
 
 # 旅遊關鍵字
-_TRAVEL_KEYWORDS = ["旅遊", "出國", "旅行", "行程", "自由行", "跟團"]
-_DESTINATIONS = ["日本", "韓國", "泰國", "歐洲", "美國", "東京", "大阪", "京都", "首爾", "曼谷", "沖繩", "北海道"]
+_TRAVEL_KEYWORDS = ["旅遊", "出國", "旅行", "行程", "自由行", "跟團", "玩"]
+_DESTINATIONS = [
+    # 海外
+    "日本", "韓國", "泰國", "歐洲", "美國", "東京", "大阪", "京都",
+    "首爾", "曼谷", "沖繩", "北海道", "新加坡", "馬來西亞", "越南",
+    "香港", "澳門", "澳洲", "紐西蘭", "英國", "法國", "德國",
+    "加拿大", "夏威夷", "峇里島", "長灘島",
+    # 國內
+    "花蓮", "台東", "台南", "高雄", "墾丁", "宜蘭", "日月潭",
+    "阿里山", "澎湖", "金門", "馬祖", "綠島", "蘭嶼", "台中",
+    "嘉義", "苗栗", "南投", "屏東", "小琉球",
+]
 
 # 金額 pattern：支援 "300", "300元", "2000塊", "10萬", "3.5萬", "15,000"
 _AMOUNT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*萬")
@@ -533,7 +543,7 @@ def _extract_all_pairs(text: str) -> list[dict]:
     amount_matches.sort(key=lambda x: x[0])
 
     results = []
-    for i, (start, end, amount) in enumerate(amount_matches):
+    for i, (start, _end, amount) in enumerate(amount_matches):
         seg_start = amount_matches[i - 1][1] if i > 0 else 0
         segment = text[seg_start:start]
         merchant = _extract_merchant(segment)
@@ -548,6 +558,68 @@ def _extract_all_pairs(text: str) -> list[dict]:
     return results
 
 
+def _extract_shared_amount_merchants(text: str) -> list[dict] | None:
+    """
+    偵測「A 和/跟/與 B（共用金額）」的模式。
+    例如「蝦皮和 Momo 15000」→ 兩筆各 7500。
+    """
+    # 從 _CATEGORY_KEYWORDS 收集已知商家名稱（排除分類名稱本身，如「網購」「加油」）
+    _GENERIC_KEYWORDS = set(_CATEGORY_KEYWORDS.keys())  # 分類名稱不是真正的商家
+    all_merchants = []
+    for keywords in _CATEGORY_KEYWORDS.values():
+        for kw in keywords:
+            if kw not in _GENERIC_KEYWORDS:
+                all_merchants.append(kw)
+
+    # 尋找文字中出現的所有已知商家
+    lower = text.lower()
+    found = []
+    for m in all_merchants:
+        ml = m.lower()
+        pos = lower.find(ml)
+        if pos >= 0:
+            # 避免子字串重複（如 "line pay" 和 "pay"），取最長的
+            overlap = False
+            for _, fm, fp in found:
+                if abs(pos - fp) < max(len(m), len(fm)) and len(m) < len(fm):
+                    overlap = True
+                    break
+            if not overlap:
+                # 移除被新的更長匹配覆蓋的舊匹配
+                found = [(p, n, fp) for p, n, fp in found
+                         if not (abs(pos - fp) < max(len(m), len(n)) and len(n) < len(m))]
+                found.append((pos, m, pos))
+
+    if len(found) < 2:
+        return None
+
+    # 檢查商家之間是否有「和」「跟」「與」「還有」「以及」連接
+    found.sort(key=lambda x: x[0])
+    between = text[found[0][0] + len(found[0][1]):found[-1][0]]
+    connectors = ["和", "跟", "與", "還有", "以及", "、"]
+    has_connector = any(c in between for c in connectors)
+    if not has_connector:
+        return None
+
+    # 提取金額
+    amount = _extract_amount(text)
+    if not amount:
+        return None
+
+    # 平分金額
+    merchants = [(f[1], f[0]) for f in found]
+    per_amount = round(amount / len(merchants))
+    intents = []
+    for merchant_name, _ in merchants:
+        category = _guess_category(merchant_name)
+        intent = {"mode": "instant", "merchant": merchant_name, "amount": per_amount}
+        if category:
+            intent["category"] = category
+        intents.append(intent)
+
+    return intents
+
+
 def _rule_extract(user_input: str) -> dict:
     """規則式意圖解析。自動偵測多筆交易。"""
     text = user_input.strip()
@@ -556,6 +628,11 @@ def _rule_extract(user_input: str) -> dict:
     pairs = _extract_all_pairs(text)
     if len(pairs) > 1:
         return {"mode": "multi", "intents": pairs}
+
+    # 嘗試「多商家共用金額」（A 和 B 共 15000）
+    shared = _extract_shared_amount_merchants(text)
+    if shared and len(shared) > 1:
+        return {"mode": "multi", "intents": shared}
 
     return _rule_extract_single(text)
 
