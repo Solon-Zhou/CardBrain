@@ -50,6 +50,21 @@ ComparePage.init = () => {
   const selected = [null, null];
   let activeSlot = 0;
 
+  function parseRateNumber(value) {
+    if (value == null) return 0;
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+    const m = String(value).match(/-?\d+(?:\.\d+)?/);
+    if (!m) return 0;
+    const n = Number(m[0]);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatRateText(rate) {
+    if (!rate) return "—";
+    const rounded = rate % 1 === 0 ? String(rate) : String(Number(rate.toFixed(2)));
+    return `${rounded}%`;
+  }
+
   async function ensureCards() {
     if (!_cmpAllCards) {
       _cmpAllCards = await API.getCards();
@@ -183,8 +198,8 @@ ComparePage.init = () => {
 
       let wins0 = 0, wins1 = 0;
       const rows = allCats.map((cat) => {
-        const r0 = map0[cat] ? map0[cat].rate : 0;
-        const r1 = map1[cat] ? map1[cat].rate : 0;
+        const r0 = map0[cat] ? parseRateNumber(map0[cat].rate) : 0;
+        const r1 = map1[cat] ? parseRateNumber(map1[cat].rate) : 0;
         if (r0 > r1) wins0++;
         else if (r1 > r0) wins1++;
         return { cat, r0, r1 };
@@ -213,10 +228,10 @@ ComparePage.init = () => {
           <div class="cmp-row">
             <div class="cmp-row-cat">${escapeHtml(cat)}</div>
             <div class="cmp-cell">
-              <span class="cmp-cell-inner ${w0}">${r0 ? r0 + "% 回饋" : "—"}${w0 ? check : ""}</span>
+              <span class="cmp-cell-inner ${w0}">${formatRateText(r0)}${w0 ? check : ""}</span>
             </div>
             <div class="cmp-cell">
-              <span class="cmp-cell-inner ${w1}">${r1 ? r1 + "% 回饋" : "—"}${w1 ? check : ""}</span>
+              <span class="cmp-cell-inner ${w1}">${formatRateText(r1)}${w1 ? check : ""}</span>
             </div>
           </div>`;
       });

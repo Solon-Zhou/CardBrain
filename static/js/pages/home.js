@@ -2,13 +2,23 @@
  * home.js — 首頁：Agent 聊天
  */
 
+const AGENT_AVATAR_SRC = "/static/avatar.png";
+
+function _agentAvatarHtml(extraStyle = "") {
+  const styleAttr = extraStyle ? ` style="${extraStyle}"` : "";
+  return `<div class="agent-avatar"${styleAttr}><img class="agent-avatar-img" src="${AGENT_AVATAR_SRC}" alt="CardBrain Agent" decoding="async"></div>`;
+}
+
 async function HomePage() {
   return `
     <div class="agent-section">
       <div class="agent-messages" id="agentMessages">
-        <div class="agent-bubble bot">
-          <div class="agent-avatar">🧠</div>
-          <div class="agent-text">嗨！我是 CardBrain Agent，告訴我你的消費情境，我幫你找最划算的卡。<br><br>試試看：「星巴克 300」、「全聯 2000」、「日本旅遊 10萬」</div>
+        <div class="agent-bubble bot" style="margin-top: 16px;">
+          ${_agentAvatarHtml("align-self: flex-start; margin-top: -12px; position: relative; z-index: 2;")}
+          <div class="agent-text" style="margin-left: -16px; width: 100%; max-width: 85%;">
+            <p style="font-weight: 600; font-size: 15px; margin-bottom: 12px; color: var(--text);">嗨！我是 CardBrain Agent，告訴我你的消費情境，我幫你找最划算的卡。</p>
+            <p style="font-size: 13px; color: var(--text-light); font-style: italic; border-top: 1px solid var(--border); padding-top: 10px;">試試看：「星巴克 300」、「全聯 2000」、「日本旅遊 10萬」</p>
+          </div>
         </div>
       </div>
       <div class="agent-quick-tags" id="agentQuickTags">
@@ -29,6 +39,9 @@ async function HomePage() {
 }
 
 HomePage.init = () => {
+  const pageContainer = document.getElementById("page-container");
+  if (pageContainer) pageContainer.classList.add("is-agent-page");
+
   const messagesEl = document.getElementById("agentMessages");
   const agentInput = document.getElementById("agentInput");
   const sendBtn = document.getElementById("agentSendBtn");
@@ -41,7 +54,7 @@ HomePage.init = () => {
     const bubble = document.createElement("div");
     bubble.className = `agent-bubble ${role}`;
     if (role === "bot") {
-      bubble.innerHTML = `<div class="agent-avatar">🧠</div><div class="agent-text">${text}</div>`;
+      bubble.innerHTML = `${_agentAvatarHtml()}<div class="agent-text">${text}</div>`;
     } else {
       bubble.innerHTML = `<div class="agent-text">${escapeHtml(text)}</div>`;
     }
@@ -54,7 +67,7 @@ HomePage.init = () => {
     const bubble = document.createElement("div");
     bubble.className = "agent-bubble bot";
     bubble.id = "agentTyping";
-    bubble.innerHTML = `<div class="agent-avatar">🧠</div><div class="agent-text agent-typing"><span></span><span></span><span></span></div>`;
+    bubble.innerHTML = `${_agentAvatarHtml()}<div class="agent-text agent-typing"><span></span><span></span><span></span></div>`;
     messagesEl.appendChild(bubble);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
@@ -137,6 +150,7 @@ HomePage.init = () => {
   });
 
   HomePage.destroy = () => {
+    if (pageContainer) pageContainer.classList.remove("is-agent-page");
     _chatHistory = [];
   };
 };

@@ -7,7 +7,32 @@ __pycache__/
 # Capacitor / Node
 node_modules/
 www/
-android/
-ios/
-.gradle/
 *.apk
+
+# Android (commit android/ but ignore build artifacts & local IDE config)
+android/.gradle/
+android/**/build/
+android/local.properties
+android/.idea/
+android/.settings/
+android/.classpath
+android/.project
+android/app/src/main/assets/public/
+
+# iOS (commit ios/ but ignore build artifacts & local Xcode data)
+ios/**/build/
+ios/**/DerivedData/
+ios/**/*.xcuserdata/
+ios/**/*.xcworkspace/xcuserdata/
+ios/**/*.xcodeproj/xcuserdata/
+ios/App/App/public/
+
+# Mobile build outputs
+*.aab
+*.ipa
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
