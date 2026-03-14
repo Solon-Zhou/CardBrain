@@ -1,18 +1,52 @@
 """
 查詢引擎 - 核心功能：給商家名稱，回傳最佳刷卡建議
 這就是未來 Geofencing 觸發時會呼叫的邏輯
+支援雙模式：有 DATABASE_URL → PostgreSQL，無 → SQLite fallback
 """
 
 import sqlite3
 import os
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "cards.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# placeholder: PostgreSQL 用 %s，SQLite 用 ?
+_PH = "%s" if DATABASE_URL else "?"
 
 
 def get_conn():
+    if DATABASE_URL:
+        import psycopg2
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.autocommit = True
+        return conn
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _cursor(conn):
+    if DATABASE_URL:
+        import psycopg2.extras
+        return conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    return conn.cursor()
+
+
+def _rows_to_dicts(rows):
+    """統一將查詢結果轉為 list[dict]。RealDictRow 和 sqlite3.Row 都支援 dict()。"""
+    return [dict(row) for row in rows]
+
+
+def get_category_id_by_name(name: str) -> int | None:
+    """依分類名稱取得 ID（供 brain.py / cards.py 呼叫，消除外部 raw SQL）。"""
+    conn = get_conn()
+    cur = _cursor(conn)
+    cur.execute(f"SELECT id FROM categories WHERE name = {_PH}", (name,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return dict(row)["id"] if not isinstance(row, dict) else row["id"]
+    return None
 
 
 def recommend_by_merchant(merchant_name: str, user_card_ids: list[int] | None = None):
@@ -26,9 +60,9 @@ def recommend_by_merchant(merchant_name: str, user_card_ids: list[int] | None = 
         依回饋率排序的卡片推薦清單
     """
     conn = get_conn()
-    cursor = conn.cursor()
+    cursor = _cursor(conn)
 
-    query = """
+    query = f"""
         SELECT
             c.id AS card_id,
             b.name AS bank_name,
@@ -44,19 +78,19 @@ def recommend_by_merchant(merchant_name: str, user_card_ids: list[int] | None = 
         JOIN rewards r ON r.category_id = cat.id
         JOIN cards c ON r.card_id = c.id
         JOIN banks b ON c.bank_id = b.id
-        WHERE m.name LIKE ?
+        WHERE m.name LIKE {_PH}
     """
     params = [f"%{merchant_name}%"]
 
     if user_card_ids:
-        placeholders = ",".join("?" * len(user_card_ids))
+        placeholders = ",".join([_PH] * len(user_card_ids))
         query += f" AND c.id IN ({placeholders})"
         params.extend(user_card_ids)
 
     query += " ORDER BY r.reward_rate DESC"
 
     cursor.execute(query, params)
-    results = [dict(row) for row in cursor.fetchall()]
+    results = _rows_to_dicts(cursor.fetchall())
     conn.close()
     return results
 
@@ -71,9 +105,9 @@ def recommend_by_merchants_batch(merchant_names: list[str]) -> dict[str, list[di
         return {}
 
     conn = get_conn()
-    cursor = conn.cursor()
+    cursor = _cursor(conn)
 
-    placeholders = ",".join("?" * len(merchant_names))
+    placeholders = ",".join([_PH] * len(merchant_names))
     query = f"""
         SELECT
             c.id AS card_id,
@@ -111,9 +145,9 @@ def recommend_by_merchants_batch(merchant_names: list[str]) -> dict[str, list[di
 def recommend_by_category(category_name: str):
     """依消費分類查詢最佳卡片"""
     conn = get_conn()
-    cursor = conn.cursor()
+    cursor = _cursor(conn)
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT
             c.id AS card_id,
             b.name AS bank_name,
@@ -127,11 +161,11 @@ def recommend_by_category(category_name: str):
         JOIN cards c ON r.card_id = c.id
         JOIN banks b ON c.bank_id = b.id
         JOIN categories cat ON r.category_id = cat.id
-        WHERE cat.name LIKE ?
+        WHERE cat.name LIKE {_PH}
         ORDER BY r.reward_rate DESC
     """, (f"%{category_name}%",))
 
-    results = [dict(row) for row in cursor.fetchall()]
+    results = _rows_to_dicts(cursor.fetchall())
     conn.close()
     return results
 
@@ -139,14 +173,14 @@ def recommend_by_category(category_name: str):
 def list_all_cards():
     """列出所有信用卡"""
     conn = get_conn()
-    cursor = conn.cursor()
+    cursor = _cursor(conn)
     cursor.execute("""
         SELECT c.id, b.name AS bank_name, c.card_name, c.annual_fee, c.note
         FROM cards c
         JOIN banks b ON c.bank_id = b.id
         ORDER BY b.name
     """)
-    results = [dict(row) for row in cursor.fetchall()]
+    results = _rows_to_dicts(cursor.fetchall())
     conn.close()
     return results
 
@@ -154,7 +188,7 @@ def list_all_cards():
 def list_categories():
     """列出所有分類（樹狀）"""
     conn = get_conn()
-    cursor = conn.cursor()
+    cursor = _cursor(conn)
     cursor.execute("""
         SELECT
             c.id, c.name, c.parent_id,
@@ -163,7 +197,7 @@ def list_categories():
         LEFT JOIN categories p ON c.parent_id = p.id
         ORDER BY c.parent_id NULLS FIRST, c.id
     """)
-    results = [dict(row) for row in cursor.fetchall()]
+    results = _rows_to_dicts(cursor.fetchall())
     conn.close()
     return results
 
@@ -171,10 +205,10 @@ def list_categories():
 def recommend_by_category_id(category_id: int, user_card_ids: list[int] | None = None):
     """依分類 ID 查詢最佳卡片，支援使用者卡片過濾"""
     conn = get_conn()
-    cursor = conn.cursor()
+    cursor = _cursor(conn)
 
     # 若傳入的是父分類，同時查其子分類
-    query = """
+    query = f"""
         SELECT
             c.id AS card_id,
             b.name AS bank_name,
@@ -188,19 +222,19 @@ def recommend_by_category_id(category_id: int, user_card_ids: list[int] | None =
         JOIN cards c ON r.card_id = c.id
         JOIN banks b ON c.bank_id = b.id
         JOIN categories cat ON r.category_id = cat.id
-        WHERE (cat.id = ? OR cat.parent_id = ?)
+        WHERE (cat.id = {_PH} OR cat.parent_id = {_PH})
     """
     params: list = [category_id, category_id]
 
     if user_card_ids:
-        placeholders = ",".join("?" * len(user_card_ids))
+        placeholders = ",".join([_PH] * len(user_card_ids))
         query += f" AND c.id IN ({placeholders})"
         params.extend(user_card_ids)
 
     query += " ORDER BY r.reward_rate DESC"
 
     cursor.execute(query, params)
-    results = [dict(row) for row in cursor.fetchall()]
+    results = _rows_to_dicts(cursor.fetchall())
     conn.close()
     return results
 
@@ -208,8 +242,8 @@ def recommend_by_category_id(category_id: int, user_card_ids: list[int] | None =
 def get_card_rewards(card_id: int):
     """列出某張卡的所有回饋規則，按回饋率排序"""
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("""
+    cursor = _cursor(conn)
+    cursor.execute(f"""
         SELECT
             r.reward_type,
             r.reward_rate,
@@ -222,10 +256,10 @@ def get_card_rewards(card_id: int):
         FROM rewards r
         JOIN categories cat ON r.category_id = cat.id
         LEFT JOIN categories pcat ON cat.parent_id = pcat.id
-        WHERE r.card_id = ?
+        WHERE r.card_id = {_PH}
         ORDER BY r.reward_rate DESC
     """, (card_id,))
-    results = [dict(row) for row in cursor.fetchall()]
+    results = _rows_to_dicts(cursor.fetchall())
     conn.close()
     return results
 
@@ -233,16 +267,16 @@ def get_card_rewards(card_id: int):
 def search_merchants(q: str):
     """商家名稱模糊搜尋（autocomplete 用）"""
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("""
+    cursor = _cursor(conn)
+    cursor.execute(f"""
         SELECT m.id, m.name, cat.name AS category_name
         FROM merchants m
         JOIN categories cat ON m.category_id = cat.id
-        WHERE m.name LIKE ?
+        WHERE m.name LIKE {_PH}
         ORDER BY m.name
         LIMIT 10
     """, (f"%{q}%",))
-    results = [dict(row) for row in cursor.fetchall()]
+    results = _rows_to_dicts(cursor.fetchall())
     conn.close()
     return results
 

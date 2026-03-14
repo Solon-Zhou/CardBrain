@@ -7,7 +7,7 @@ CardBrain 3.0 精算引擎
 from database.query import (
     recommend_by_merchant,
     recommend_by_category_id,
-    get_conn,
+    get_category_id_by_name,
 )
 
 # ── 行程規劃：海外 vs 國內 ──────────────────────────
@@ -329,13 +329,9 @@ def _enrich_with_actual_reward(recs: list[dict], amount: float) -> list[dict]:
 
 def _fallback_general(user_card_ids: list[int] | None = None) -> list[dict]:
     """查詢「國內一般消費」分類作為 fallback。"""
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT id FROM categories WHERE name = '國內一般消費'")
-    row = cur.fetchone()
-    conn.close()
-    if row:
-        return recommend_by_category_id(row["id"], user_card_ids)
+    cat_id = get_category_id_by_name("國內一般消費")
+    if cat_id:
+        return recommend_by_category_id(cat_id, user_card_ids)
     return []
 
 
@@ -343,13 +339,9 @@ def _query_by_category_name(
     cat_name: str, user_card_ids: list[int] | None = None
 ) -> list[dict]:
     """用分類名稱查詢推薦。"""
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT id FROM categories WHERE name = ?", (cat_name,))
-    row = cur.fetchone()
-    conn.close()
-    if row:
-        return recommend_by_category_id(row["id"], user_card_ids)
+    cat_id = get_category_id_by_name(cat_name)
+    if cat_id:
+        return recommend_by_category_id(cat_id, user_card_ids)
     return []
 
 

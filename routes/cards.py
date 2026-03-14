@@ -7,6 +7,7 @@ from database.query import (
     recommend_by_category_id,
     get_card_rewards,
     search_merchants,
+    get_category_id_by_name,
 )
 from routes import parse_ids
 
@@ -42,14 +43,9 @@ def api_recommend_merchant(
 
     # fallback：若商家無匹配，查「國內一般消費」分類
     if not results:
-        from database.query import get_conn
-        conn = get_conn()
-        cur = conn.cursor()
-        cur.execute("SELECT id FROM categories WHERE name = '國內一般消費'")
-        row = cur.fetchone()
-        conn.close()
-        if row:
-            results = recommend_by_category_id(row["id"], ids or None)
+        cat_id = get_category_id_by_name("國內一般消費")
+        if cat_id:
+            results = recommend_by_category_id(cat_id, ids or None)
 
     return results
 
