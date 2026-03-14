@@ -176,7 +176,6 @@ def get_rate(currency_code: str) -> float:
 def convert_to_twd(
     amount: float,
     currency_code: str,
-    card_overseas_fee_rate: float | None = None,
 ) -> dict:
     """
     將外幣金額換算為台幣，並計算海外手續費。
@@ -204,7 +203,7 @@ def convert_to_twd(
     rate = get_rate(code)
     base_twd = round(amount * rate, 2)
 
-    fee_rate = card_overseas_fee_rate if card_overseas_fee_rate is not None else OVERSEAS_FEE_RATE
+    fee_rate = OVERSEAS_FEE_RATE
     fee_amount = round(base_twd * fee_rate, 2)
 
     display_text = f"{amount:g} {code} = {base_twd} TWD（匯率 {rate}）"

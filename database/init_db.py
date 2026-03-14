@@ -87,13 +87,6 @@ def init_database():
 
     conn.commit()
 
-    # cards 表 migration：新增 overseas_fee_rate 欄位（已存在則忽略）
-    try:
-        cursor.execute("ALTER TABLE cards ADD COLUMN overseas_fee_rate REAL DEFAULT NULL")
-        conn.commit()
-    except Exception:
-        pass  # 欄位已存在時忽略
-
     conn.close()
     print(f"資料庫已建立: {DB_PATH}")
 
