@@ -76,7 +76,17 @@ def init_database():
         )
     """)
 
+    # 匯率快取（TTL 1 小時，stale-on-error 容錯）
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS exchange_rates (
+            currency_code TEXT PRIMARY KEY,
+            rate_to_twd   REAL NOT NULL,
+            updated_at    TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
+
     conn.close()
     print(f"資料庫已建立: {DB_PATH}")
 
