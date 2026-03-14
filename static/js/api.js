@@ -56,9 +56,10 @@ const API = (() => {
     return res.json();
   }
 
-  async function agent(message) {
+  async function agent(message, history) {
     const payload = {
       message,
+      history: history || [],
       card_ids: Store.getMyCards(),
     };
     const res = await fetch(Config.API_BASE + "/api/agent", {

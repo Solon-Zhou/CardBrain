@@ -7,31 +7,22 @@ from brain import (
     regret_calculate,
     plan_trip,
 )
-from llm import extract_intent, generate_reply
+from llm import agent_chat
 
 router = APIRouter()
+
+_MAX_HISTORY_TURNS = 20
 
 
 @router.post("/api/brain")
 async def api_brain(request: Request):
     """
-    CardBrain 3.0 精算端點。
-    接受 {mode, query, merchant, amount, card_ids, transactions, destination, budget, breakdown}
+    CardBrain 精算端點（直接精算，不經 LLM）。
+    接受 {mode, merchant, amount, card_ids, transactions, destination, budget, breakdown}
     """
     body = await request.json()
     mode = body.get("mode")
-    query = body.get("query")
     card_ids = body.get("card_ids")
-
-    # 若有自然語言 query，經過意圖萃取補齊 merchant/amount 等欄位
-    if query:
-        intent = extract_intent(query)
-        # 合併 intent 到 body（body 中已有的欄位優先）
-        for k, v in intent.items():
-            if k not in body or body[k] is None:
-                body[k] = v
-        if not mode:
-            mode = body.get("mode", "instant")
 
     if mode == "instant":
         return _handle_instant(body, card_ids)
@@ -85,62 +76,32 @@ def _handle_plan(body: dict, card_ids: list[int] | None) -> dict:
 @router.post("/api/agent")
 async def api_agent(request: Request):
     """
-    CardBrain Agent 端點。
-    接收 { message: "星巴克 300", card_ids: [1,5] }
-    回傳 { reply: "人話回覆", mode: "instant", data: {精算結果} }
+    CardBrain Agent 端點 — Gemini Function Calling。
+    接收 { message, history, card_ids }
+    回傳 { reply, history, tool_results }
     """
     body = await request.json()
     message = body.get("message", "").strip()
+    history = body.get("history")
     card_ids = body.get("card_ids")
 
     if not message:
-        return {"reply": "請輸入你的消費情境，例如「星巴克 300」或「日本旅遊 10萬」", "mode": None, "data": None}
-
-    # 1. 意圖解析
-    intent = extract_intent(message)
-    mode = intent.get("mode", "instant")
-    logging.info("🧠 intent | input=%r | mode=%s | result=%s", message, mode, intent)
-
-    # 無法辨識的輸入 → 直接回傳引導訊息，不呼叫 brain
-    if mode == "unknown":
         return {
-            "reply": "我是刷卡推薦助手 💳 請輸入消費情境，例如「星巴克 300」或「日本旅遊 10萬」",
-            "mode": None,
-            "data": None,
+            "reply": "請輸入你的消費情境，例如「星巴克 300」或「日本旅遊 10萬」",
+            "history": history or [],
+            "tool_results": [],
         }
 
-    # 釐清模式 → 反問使用者，不呼叫 brain
-    if mode == "clarify":
-        reply = generate_reply(mode, intent, {})
-        return {"reply": reply, "mode": "clarify", "data": None}
+    # 截斷 history（max 20 turns）
+    if history and len(history) > _MAX_HISTORY_TURNS:
+        history = history[-_MAX_HISTORY_TURNS:]
 
-    # 2. 呼叫精算引擎
-    if mode == "multi":
-        items = []
-        for sub_intent in intent.get("intents", []):
-            sub_input = {**sub_intent, "card_ids": card_ids}
-            sub_mode = sub_intent.get("mode", "instant")
-            if sub_mode == "instant":
-                sub_data = _handle_instant(sub_input, card_ids)
-            elif sub_mode == "plan":
-                sub_data = _handle_plan(sub_input, card_ids)
-            else:
-                continue
-            items.append({"mode": sub_mode, "intent": sub_intent, "data": sub_data})
-        data = {"items": items}
-    else:
-        brain_input = {**intent, "card_ids": card_ids}
-        if mode == "instant":
-            data = _handle_instant(brain_input, card_ids)
-        elif mode == "regret":
-            data = _handle_regret(brain_input, card_ids)
-        elif mode == "plan":
-            data = _handle_plan(brain_input, card_ids)
-        else:
-            data = {"error": "Unknown mode"}
+    result = agent_chat(message, history, card_ids)
+    logging.info(
+        "🧠 agent | input=%r | tools=%s | reply_len=%d",
+        message,
+        [t["name"] for t in result.get("tool_results", [])],
+        len(result.get("reply", "")),
+    )
 
-    # 3. 生成自然語言回覆
-    reply = generate_reply(mode, intent, data)
-    logging.info("🧠 brain  | mode=%s | data_keys=%s", mode, list(data.keys()) if isinstance(data, dict) else "N/A")
-
-    return {"reply": reply, "mode": mode, "data": data}
+    return result

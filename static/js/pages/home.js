@@ -34,6 +34,8 @@ HomePage.init = () => {
   const sendBtn = document.getElementById("agentSendBtn");
   const quickTags = document.getElementById("agentQuickTags");
   let _sending = false;
+  let _chatHistory = [];
+  const _MAX_HISTORY = 30;
 
   function addBubble(role, text) {
     const bubble = document.createElement("div");
@@ -66,6 +68,23 @@ HomePage.init = () => {
     return escapeHtml(text).replace(/\n/g, "<br>");
   }
 
+  function buildToolCards(toolResults) {
+    if (!toolResults || !toolResults.length) return "";
+    let html = "";
+    for (const tr of toolResults) {
+      const result = tr.result;
+      if (!result || result.error) continue;
+      if (tr.name === "instant_recommend") {
+        html += _buildInstantCard(result);
+      } else if (tr.name === "plan_trip") {
+        html += _buildPlanCard(result);
+      } else if (tr.name === "regret_calculate") {
+        html += _buildRegretCard(result);
+      }
+    }
+    return html;
+  }
+
   async function sendMessage(text) {
     if (_sending || !text.trim()) return;
     _sending = true;
@@ -78,16 +97,21 @@ HomePage.init = () => {
     addTyping();
 
     try {
-      const res = await API.agent(text);
+      const res = await API.agent(text, _chatHistory);
       removeTyping();
       if (!res || typeof res !== "object") {
         addBubble("bot", "抱歉，收到了異常的回應格式。");
       } else {
-        const replyHtml = formatReply(res.reply || "抱歉，我無法理解你的問題。");
-        let extraHtml = "";
-        if (res.data && typeof res.data === "object" && !res.data.error) {
-          extraHtml = _buildDataCard(res.mode, res.data);
+        // 更新 chat history
+        if (res.history) {
+          _chatHistory = res.history;
+          if (_chatHistory.length > _MAX_HISTORY) {
+            _chatHistory = _chatHistory.slice(-_MAX_HISTORY);
+          }
         }
+
+        const replyHtml = formatReply(res.reply || "抱歉，我無法理解你的問題。");
+        const extraHtml = buildToolCards(res.tool_results);
         addBubble("bot", replyHtml + extraHtml);
       }
     } catch (err) {
@@ -111,16 +135,13 @@ HomePage.init = () => {
     const tag = e.target.closest(".agent-tag");
     if (tag) sendMessage(tag.dataset.msg);
   });
+
+  HomePage.destroy = () => {
+    _chatHistory = [];
+  };
 };
 
 // ── 精算結果卡片渲染 ──
-function _buildDataCard(mode, data) {
-  if (mode === "instant") return _buildInstantCard(data);
-  if (mode === "plan") return _buildPlanCard(data);
-  if (mode === "regret") return _buildRegretCard(data);
-  return "";
-}
-
 function _buildInstantCard(data) {
   const results = data.results || [];
   if (!results.length) return "";
