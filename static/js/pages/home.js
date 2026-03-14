@@ -151,7 +151,7 @@ function _buildInstantCard(data) {
 
   let html = `<div class="agent-data-card">`;
   html += `<div class="agent-data-best">
-    <div class="agent-data-best-label">最佳推薦</div>
+    <div class="agent-data-best-label">💳 你的最佳卡</div>
     <div class="agent-data-best-name">${escapeHtml(best.bank_name)} ${escapeHtml(best.card_name)}</div>
     <div class="agent-data-best-reward">$${(best.actual_reward || 0).toFixed(1)} <small>${unit}</small></div>
     <div class="agent-data-best-rate">${best.reward_rate}%</div>
@@ -168,6 +168,18 @@ function _buildInstantCard(data) {
     });
     html += `</div>`;
   }
+
+  const bc = data.better_card;
+  if (bc) {
+    const bcType = bc.reward_type || "cashback";
+    const bcUnit = bcType === "cashback" ? "回饋" : (bcType === "miles" ? "哩程" : "點");
+    html += `<div class="agent-data-upgrade">
+      <div class="agent-data-upgrade-label">✨ 辦卡推薦</div>
+      <div class="agent-data-upgrade-name">${escapeHtml(bc.bank_name)} ${escapeHtml(bc.card_name)}</div>
+      <div class="agent-data-upgrade-detail">${bc.reward_rate}% → $${(bc.actual_reward || 0).toFixed(1)} ${bcUnit}，多賺 $${(bc.extra_reward || 0).toFixed(1)}</div>
+    </div>`;
+  }
+
   html += `</div>`;
   return html;
 }
