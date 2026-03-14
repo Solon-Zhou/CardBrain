@@ -129,17 +129,27 @@ def _build_reply_summary(mode: str, intent: dict, brain_result: dict) -> str:
     elif mode == "plan":
         lines.append(f"目的地：{brain_result.get('destination', '')}")
         lines.append(f"預估總省下：${brain_result.get('total_savings', 0):,.1f}")
+        # ── 分類明細 ──
+        breakdown = brain_result.get("breakdown", [])
+        if breakdown:
+            lines.append("── 分類明細 ──")
+            for b in breakdown:
+                card = b.get("best_card", "無推薦")
+                rate = b.get("best_rate", 0)
+                lines.append(f"{b['category_label']} ${b['amount']:,.0f} → {card}（{rate}%）→ 省 ${b.get('savings', 0):,.1f}")
+        # ── 帶卡清單 ──
+        lines.append("── 帶卡清單 ──")
         for c in brain_result.get("cards_to_bring", [])[:3]:
             usage = "、".join(c.get("usage", []))
             lines.append(f"帶卡：{c['card']}（{usage}）")
+        # ── 更好選擇 ──
         extra = brain_result.get("extra_if_upgrade", 0)
         if extra > 0:
-            # 找出哪些類別有更好的卡
-            for b in brain_result.get("breakdown", []):
+            lines.append(f"── 更好選擇（多省 ${extra:,.1f}）──")
+            for b in breakdown:
                 bc = b.get("better_card")
                 if bc:
-                    lines.append(f"更好選擇：{b['category_label']}辦 {bc['card']}（{bc['rate']}%，多省 ${bc['extra']:,.1f}）")
-            lines.append(f"全部升級可多省 ${extra:,.1f}")
+                    lines.append(f"{b['category_label']}辦 {bc['card']}（{bc['rate']}%，多省 ${bc['extra']:,.1f}）")
     elif mode == "multi":
         for item in brain_result.get("items", []):
             sub = item.get("data", {})
@@ -153,10 +163,14 @@ def _build_reply_summary(mode: str, intent: dict, brain_result: dict) -> str:
             if best:
                 lines.append(f"你的最佳：{best['bank_name']} {best['card_name']}，"
                              f"回饋 ${best.get('actual_reward', 0):,.1f}（{best.get('reward_rate', 0)}%）")
+                if len(results) > 1:
+                    r2 = results[1]
+                    lines.append(f"第2推薦：{r2['bank_name']} {r2['card_name']}，"
+                                 f"回饋 ${r2.get('actual_reward', 0):,.1f}（{r2.get('reward_rate', 0)}%）")
             better = sub.get("better_card")
             if better:
                 lines.append(f"更好選擇：辦 {better['bank_name']} {better['card_name']} "
-                             f"可多賺 ${better['extra_reward']:,.1f}")
+                             f"可得 ${better['actual_reward']:,.1f}（多賺 ${better['extra_reward']:,.1f}）")
     return "\n".join(lines)
 
 
