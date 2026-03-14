@@ -14,7 +14,7 @@ import re
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")  # "gemini", "openai", or "anthropic"
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "")
-_LLM_TIMEOUT = 15  # 所有 LLM provider 統一超時秒數
+_LLM_TIMEOUT = 30  # 思考型模型（gemini-2.5-flash）需要更多時間
 
 _SYSTEM_PROMPT = """你是 CardBrain 的意圖解析器。使用者會用中文自然語言描述消費或旅遊計畫。
 請分析使用者輸入，回傳 JSON（不要包含其他文字）。
@@ -161,7 +161,7 @@ def _llm_reply(mode: str, intent: dict, brain_result: dict) -> str:
         payload = {
             "system_instruction": {"parts": [{"text": _REPLY_SYSTEM_PROMPT}]},
             "contents": [{"parts": [{"text": user_msg}]}],
-            "generationConfig": {"temperature": 0.3, "maxOutputTokens": 600},
+            "generationConfig": {"temperature": 0, "maxOutputTokens": 800},
         }
         resp = httpx.post(url, json=payload, timeout=_LLM_TIMEOUT)
         resp.raise_for_status()
