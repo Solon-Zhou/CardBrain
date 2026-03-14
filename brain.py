@@ -209,6 +209,7 @@ def plan_trip(
 
     category_results = []
     total_savings = 0.0
+    total_all_savings = 0.0
     cards_to_bring = {}  # card_name -> 用途
 
     for key, amount in breakdown.items():
@@ -218,19 +219,29 @@ def plan_trip(
         cat_name = TRIP_CATEGORY_MAPPING.get(key, "海外消費")
         cat_label = _category_label(key)
 
-        # 先查特定分類，再嘗試國家分類
-        recs = _query_by_category_name(cat_name, user_card_ids)
-        if country_cat and not recs:
-            recs = _query_by_category_name(country_cat, user_card_ids)
-        if not recs:
-            recs = _fallback_general(user_card_ids)
+        def _query_cat(card_ids):
+            recs = _query_by_category_name(cat_name, card_ids)
+            if country_cat and not recs:
+                recs = _query_by_category_name(country_cat, card_ids)
+            if not recs:
+                recs = _fallback_general(card_ids)
+            enriched = _enrich_with_actual_reward(recs, amount)
+            enriched.sort(key=lambda x: x["actual_reward"], reverse=True)
+            return enriched
 
-        enriched = _enrich_with_actual_reward(recs, amount)
-        enriched.sort(key=lambda x: x["actual_reward"], reverse=True)
-        best = enriched[0] if enriched else None
+        # 使用者的卡
+        my_enriched = _query_cat(user_card_ids) if user_card_ids else []
+        best = my_enriched[0] if my_enriched else None
+        my_savings = best["actual_reward"] if best else 0.0
 
-        savings = best["actual_reward"] if best else 0.0
+        # 全市場最佳
+        all_enriched = _query_cat(None)
+        all_best = all_enriched[0] if all_enriched else None
+        all_savings = all_best["actual_reward"] if all_best else 0.0
+
+        savings = my_savings if my_savings > 0 else all_savings
         total_savings += savings
+        total_all_savings += all_savings
 
         item = {
             "category": key,
@@ -242,18 +253,30 @@ def plan_trip(
             card_key = f"{best['bank_name']} {best['card_name']}"
             item["best_card"] = card_key
             item["best_rate"] = best["reward_rate"]
-            # 記錄帶卡清單
             if card_key not in cards_to_bring:
                 cards_to_bring[card_key] = []
             cards_to_bring[card_key].append(cat_label)
 
+        # 全市場有更好的卡
+        if all_best and all_savings > my_savings:
+            is_user_card = user_card_ids and all_best["card_id"] in user_card_ids
+            if not is_user_card:
+                item["better_card"] = {
+                    "card": f"{all_best['bank_name']} {all_best['card_name']}",
+                    "rate": all_best["reward_rate"],
+                    "savings": round(all_savings, 2),
+                    "extra": round(all_savings - my_savings, 2),
+                }
+
         category_results.append(item)
 
+    extra_total = round(total_all_savings - total_savings, 2)
     return {
         "destination": destination,
         "total_budget": total_budget,
         "breakdown": category_results,
         "total_savings": round(total_savings, 2),
+        "extra_if_upgrade": extra_total if extra_total > 0 else 0,
         "cards_to_bring": [
             {"card": card, "usage": usage}
             for card, usage in cards_to_bring.items()

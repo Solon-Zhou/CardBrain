@@ -111,6 +111,14 @@ def _build_reply_summary(mode: str, intent: dict, brain_result: dict) -> str:
         for c in brain_result.get("cards_to_bring", [])[:3]:
             usage = "、".join(c.get("usage", []))
             lines.append(f"帶卡：{c['card']}（{usage}）")
+        extra = brain_result.get("extra_if_upgrade", 0)
+        if extra > 0:
+            # 找出哪些類別有更好的卡
+            for b in brain_result.get("breakdown", []):
+                bc = b.get("better_card")
+                if bc:
+                    lines.append(f"更好選擇：{b['category_label']}辦 {bc['card']}（{bc['rate']}%，多省 ${bc['extra']:,.1f}）")
+            lines.append(f"全部升級可多省 ${extra:,.1f}")
     elif mode == "multi":
         for item in brain_result.get("items", []):
             sub = item.get("data", {})
@@ -238,6 +246,13 @@ def _template_reply(mode: str, intent: dict, brain_result: dict) -> str:
             for c in cards_to_bring[:3]:
                 usage = "、".join(c.get("usage", []))
                 reply += f"\n- {c['card']}（{usage}）"
+        extra = brain_result.get("extra_if_upgrade", 0)
+        if extra > 0:
+            for b in brain_result.get("breakdown", []):
+                bc = b.get("better_card")
+                if bc:
+                    reply += f"\n💡 {b['category_label']}辦 {bc['card']}（{bc['rate']}%，多省 ${bc['extra']:,.1f}）"
+            reply += f"\n全部升級可多省 ${extra:,.1f}"
         return reply
 
     elif mode == "multi":
@@ -421,8 +436,9 @@ def _guess_category(text: str) -> str | None:
 _TRAVEL_KEYWORDS = ["旅遊", "出國", "旅行", "行程", "自由行", "跟團"]
 _DESTINATIONS = ["日本", "韓國", "泰國", "歐洲", "美國", "東京", "大阪", "京都", "首爾", "曼谷", "沖繩", "北海道"]
 
-# 金額 pattern：支援 "300", "300元", "2000塊", "10萬", "3.5萬"
+# 金額 pattern：支援 "300", "300元", "2000塊", "10萬", "3.5萬", "15,000"
 _AMOUNT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*萬")
+_AMOUNT_COMMA_RE = re.compile(r"(\d{1,3}(?:,\d{3})+)\s*(?:元|塊)?")
 _AMOUNT_SIMPLE_RE = re.compile(r"(\d{2,})\s*(?:元|塊)?(?=\s|$|[，,。！？\u4e00-\u9fff])")
 
 # 中文數字解析
@@ -464,6 +480,9 @@ def _extract_all_pairs(text: str) -> list[dict]:
     amount_matches = []
     for m in _AMOUNT_RE.finditer(text):
         amount_matches.append((m.start(), m.end(), float(m.group(1)) * 10000))
+    for m in _AMOUNT_COMMA_RE.finditer(text):
+        if not any(a[0] <= m.start() < a[1] for a in amount_matches):
+            amount_matches.append((m.start(), m.end(), float(m.group(1).replace(",", ""))))
     for m in _AMOUNT_SIMPLE_RE.finditer(text):
         if not any(a[0] <= m.start() < a[1] for a in amount_matches):
             amount_matches.append((m.start(), m.end(), float(m.group(1))))
@@ -563,6 +582,11 @@ def _extract_amount(text: str) -> float | None:
     if m:
         return float(m.group(1)) * 10000
 
+    # 找逗號分隔數字（15,000）
+    m = _AMOUNT_COMMA_RE.search(text)
+    if m:
+        return float(m.group(1).replace(",", ""))
+
     # 再找普通數字
     m = _AMOUNT_SIMPLE_RE.search(text)
     if m:
@@ -583,13 +607,17 @@ def _extract_merchant(text: str) -> str | None:
     cleaned = text
     # 移除金額相關（阿拉伯 + 中文數字）
     cleaned = _AMOUNT_RE.sub("", cleaned)
+    cleaned = _AMOUNT_COMMA_RE.sub("", cleaned)
     cleaned = _AMOUNT_SIMPLE_RE.sub("", cleaned)
     cleaned = _CN_AMOUNT_RE.sub("", cleaned)
     # 移除常見動詞、介詞、時間詞
     for word in ["在", "去", "到", "花", "刷", "買", "吃", "喝", "消費", "結帳", "付",
-                  "我", "了", "之後", "然後", "接著", "再", "又", "先", "跟",
+                  "我", "了", "的", "是", "有", "和", "跟", "還有", "以及",
+                  "之後", "然後", "接著", "再", "又", "先",
                   "預計", "大概", "大約", "左右", "元", "塊",
-                  "等一下", "最後", "準備", "要", "可能", "東西", "一些"]:
+                  "等一下", "最後", "準備", "要", "可能", "東西", "一些",
+                  "每個月", "固定", "通常", "都", "會", "大概會",
+                  "網購族", "哪張卡", "哪張", "現金回饋", "回饋", "最划算", "划算"]:
         cleaned = cleaned.replace(word, " ")
     # 移除數字
     cleaned = re.sub(r"\d+", "", cleaned)
