@@ -109,6 +109,11 @@ async def api_agent(request: Request):
             "data": None,
         }
 
+    # 釐清模式 → 反問使用者，不呼叫 brain
+    if mode == "clarify":
+        reply = generate_reply(mode, intent, {})
+        return {"reply": reply, "mode": "clarify", "data": None}
+
     # 2. 呼叫精算引擎
     if mode == "multi":
         items = []
