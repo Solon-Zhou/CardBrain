@@ -334,7 +334,15 @@ def _parse_json_response(text: str) -> dict:
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*", "", text)
         text = re.sub(r"\s*```$", "", text)
-    return json.loads(text)
+    result = json.loads(text)
+    # LLM 有時回傳陣列 [{...}] 而非物件 {...}，取第一個元素
+    if isinstance(result, list):
+        if len(result) > 0 and isinstance(result[0], dict):
+            return result[0]
+        return {"mode": "unknown"}
+    if not isinstance(result, dict):
+        return {"mode": "unknown"}
+    return result
 
 
 # ── 規則式解析（fallback） ──────────────────────────
