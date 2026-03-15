@@ -27,8 +27,13 @@ const CapBridge = (() => {
   const RESET_DISTANCE = 300; // 300m 移動後重置已通知
   const RESET_INTERVAL = 30 * 60 * 1000; // 30 分鐘定期重置
 
-  // ── DEBUG: 用通知當 log，測完刪掉 ──
+  // ── DEBUG: 測完全部改 false ──
   const _DEBUG = true;
+  // 測試模式：模擬台北車站座標，讓偏遠地區也能驗證推播
+  const _TEST_MODE = true;
+  const _TEST_LAT = 25.0478;
+  const _TEST_LNG = 121.5170;
+
   function _dbg(msg) {
     if (!_DEBUG) return;
     LocalNotifications.schedule({
@@ -130,6 +135,11 @@ const CapBridge = (() => {
       const params = new URLSearchParams({ lat, lng });
       if (cardIds.length) params.set("card_ids", cardIds.join(","));
 
+      // 測試模式：附加模擬座標讓 API 用台北車站附近查商家
+      if (_TEST_MODE) {
+        params.set("debug_lat", _TEST_LAT);
+        params.set("debug_lng", _TEST_LNG);
+      }
       const url = `${Config.API_BASE}/api/nearby?${params}`;
 
       const res = await fetch(url);
