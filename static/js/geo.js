@@ -9,6 +9,7 @@ const Geo = (() => {
   let lastFetchTime = 0;
   const MIN_INTERVAL = 60000; // 60s
   const MIN_DISTANCE = 50; // 50m
+  const RESET_DISTANCE = 300; // 300m 移動後重置推播 dedupe
 
   function _distanceM(lat1, lng1, lat2, lng2) {
     const R = 6371000;
@@ -45,11 +46,16 @@ const Geo = (() => {
   function _onPosition(pos, callback) {
     const { latitude: lat, longitude: lng, accuracy } = pos.coords;
     const now = Date.now();
+    const dist = lastLat !== null ? _distanceM(lastLat, lastLng, lat, lng) : 0;
+
+    // 大幅移動後清空已通知商家，讓新區域可以重新推播
+    if (dist >= RESET_DISTANCE && typeof Notify !== "undefined" && Notify.clearNotified) {
+      Notify.clearNotified();
+    }
 
     // 節流：間隔 + 位移
-    if (lastLat !== null) {
-      const dist = _distanceM(lastLat, lastLng, lat, lng);
-      if (now - lastFetchTime < MIN_INTERVAL && dist < MIN_DISTANCE) return;
+    if (lastLat !== null && now - lastFetchTime < MIN_INTERVAL && dist < MIN_DISTANCE) {
+      return;
     }
 
     lastLat = lat;

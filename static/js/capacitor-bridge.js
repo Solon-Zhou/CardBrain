@@ -21,6 +21,11 @@ const CapBridge = (() => {
   const _notified = new Set();
   let _notifId = 1;
   let _watcherId = null;
+  let _lastLat = null;
+  let _lastLng = null;
+  let _lastResetTs = 0;
+  const RESET_DISTANCE = 300; // 300m 移動後重置已通知
+  const RESET_INTERVAL = 30 * 60 * 1000; // 30 分鐘定期重置
 
   /**
    * 初始化背景定位 + 通知
@@ -110,6 +115,8 @@ const CapBridge = (() => {
    */
   async function _onLocation(lat, lng) {
     try {
+      _maybeResetNotified(lat, lng);
+
       const cardIds = Store.getMyCards();
       const params = new URLSearchParams({ lat, lng });
       if (cardIds.length) params.set("card_ids", cardIds.join(","));
@@ -141,6 +148,34 @@ const CapBridge = (() => {
     } catch (e) {
       console.warn("[CapBridge] onLocation error:", e);
     }
+  }
+
+  // 位置大幅變動或經過一定時間後重置已通知清單，避免跨區域無法再推播
+  function _maybeResetNotified(lat, lng) {
+    const now = Date.now();
+    if (_lastLat === null) {
+      _lastLat = lat;
+      _lastLng = lng;
+      _lastResetTs = now;
+      return;
+    }
+    const dist = _haversine(_lastLat, _lastLng, lat, lng);
+    if (dist >= RESET_DISTANCE || now - _lastResetTs >= RESET_INTERVAL) {
+      _notified.clear();
+      _lastResetTs = now;
+    }
+    _lastLat = lat;
+    _lastLng = lng;
+  }
+
+  function _haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const rlat1 = lat1 * Math.PI / 180;
+    const rlat2 = lat2 * Math.PI / 180;
+    const dlat = (lat2 - lat1) * Math.PI / 180;
+    const dlng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dlat / 2) ** 2 + Math.cos(rlat1) * Math.cos(rlat2) * Math.sin(dlng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
   return { init };

@@ -4,8 +4,10 @@ import logging
 import math
 import os
 import time
+import ssl
 import urllib.request
 import urllib.parse
+import warnings
 
 from fastapi import APIRouter, Query
 from database.query import recommend_by_merchants_batch
@@ -15,6 +17,14 @@ from routes import parse_ids
 router = APIRouter()
 
 GOOGLE_PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY", "")
+
+# SSL context for outgoing HTTPS (fixes local CA issues)
+try:
+    import certifi
+    _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+except Exception:
+    warnings.warn("certifi not available, using default SSL context")
+    _SSL_CONTEXT = ssl.create_default_context()
 
 # ── Nearby cache（5 分鐘 TTL，上限 100 條目）─────────
 _nearby_cache: dict[str, tuple[float, list]] = {}
@@ -169,7 +179,7 @@ def _query_google_places(lat: float, lng: float) -> list[dict]:
         req.add_header("Content-Type", "application/json")
         req.add_header("X-Goog-Api-Key", GOOGLE_PLACES_API_KEY)
         req.add_header("X-Goog-FieldMask", "places.displayName,places.location")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=10, context=_SSL_CONTEXT) as resp:
             body = json.loads(resp.read().decode("utf-8"))
             places = body.get("places", [])
             return [
@@ -199,7 +209,7 @@ out center tags;"""
     try:
         req = urllib.request.Request(url, data=data, method="POST")
         req.add_header("User-Agent", "CardBrain/1.0")
-        with urllib.request.urlopen(req, timeout=12) as resp:
+        with urllib.request.urlopen(req, timeout=12, context=_SSL_CONTEXT) as resp:
             body = json.loads(resp.read().decode("utf-8"))
             # 轉為統一格式
             elements = body.get("elements", [])

@@ -1522,3 +1522,34 @@ body {
   color: var(--text-light);
   font-size: 14px;
 }
+
+/* Nearby debug & actions */
+.nearby-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0 4px;
+}
+.nearby-action-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #dfe6e9;
+  background: #fff;
+  color: #2d3436;
+  font-size: 14px;
+  cursor: pointer;
+}
+.nearby-action-btn:active {
+  background: #f1f2f6;
+}
+.nearby-debug {
+  margin: 4px 0 12px;
+  padding: 12px;
+  border: 1px dashed #dfe6e9;
+  border-radius: 10px;
+  background: #fbfcff;
+  color: #636e72;
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-all;
+}
