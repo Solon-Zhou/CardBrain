@@ -21,7 +21,6 @@ MERCHANT_ALIASES = {
     "7-eleven": "7-ELEVEN",
     "seven eleven": "7-ELEVEN",
     "7-11": "7-ELEVEN",
-    "7-Eleven": "7-ELEVEN",
     "統一超商": "7-ELEVEN",
     "familymart": "全家便利商店",
     "family mart": "全家便利商店",
