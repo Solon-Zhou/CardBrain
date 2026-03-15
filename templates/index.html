@@ -3,17 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#6C5CE7">
+  <meta name="theme-color" content="#2B6B7F">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>CardBrain — 最佳刷卡推薦</title>
   <link rel="manifest" href="/static/manifest.json">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/appicon-v2-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/static/icons/appicon-v2-512.png">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+  <!-- launch splash (in-app) -->
+  <div id="launchSplash" class="launch-splash" aria-hidden="true">
+    <video id="launchSplashVideo" class="launch-splash__video" autoplay muted playsinline preload="auto">
+      <source src="/static/media/watermarked-c6e1dd42-95df-4169-a383-67048a9abe06.mp4" type="video/mp4">
+    </video>
+  </div>
   <div id="app-root">
     <!-- header -->
     <header class="app-header">
@@ -26,19 +34,19 @@
     <!-- bottom tab bar -->
     <nav class="tab-bar" id="tabBar">
       <a class="tab-item active" href="#/" data-tab="/">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <img class="tab-icon" src="/static/icons/home.png" alt="">
         <span>首頁</span>
       </a>
       <a class="tab-item" href="#/compare" data-tab="/compare">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="8" height="16" rx="1"/><rect x="14" y="4" width="8" height="16" rx="1"/><path d="M7 8h-2M7 12h-2M19 8h-2M19 12h-2"/></svg>
+        <img class="tab-icon" src="/static/icons/compare.png" alt="">
         <span>比對</span>
       </a>
       <a class="tab-item" href="#/nearby" data-tab="/nearby">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <img class="tab-icon" src="/static/icons/bonus.png" alt="">
         <span>優惠</span>
       </a>
       <a class="tab-item" href="#/cards" data-tab="/cards">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <img class="tab-icon" src="/static/icons/user.png" alt="">
         <span>我的</span>
       </a>
     </nav>
@@ -54,6 +62,7 @@
   <script src="/static/js/pages/nearby.js"></script>
   <script src="/static/js/pages/compare.js"></script>
   <script src="/static/js/pages/result.js"></script>
+  <script src="/static/js/launch-splash.js"></script>
   <script src="/static/js/app.js"></script>
   <script src="/static/js/capacitor-bridge.js"></script>
   <script>

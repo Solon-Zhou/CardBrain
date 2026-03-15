@@ -1,7 +1,9 @@
-const CACHE_NAME = "cardbrain-v41";
+const CACHE_NAME = "cardbrain-v48";
 const PRECACHE = [
   "/",
+  "/static/manifest.json",
   "/static/css/style.css",
+  "/static/avatar.png",
   "/static/js/config.js",
   "/static/js/app.js",
   "/static/js/api.js",
@@ -9,11 +11,16 @@ const PRECACHE = [
   "/static/js/geo.js",
   "/static/js/notify.js",
   "/static/js/capacitor-bridge.js",
+  "/static/js/launch-splash.js",
   "/static/js/pages/home.js",
   "/static/js/pages/cards.js",
   "/static/js/pages/nearby.js",
   "/static/js/pages/compare.js",
   "/static/js/pages/result.js",
+  "/static/icons/appicon-v2-192.png",
+  "/static/icons/appicon-v2-512.png",
+  "/static/icons/apple-touch-icon.png",
+  "/static/media/watermarked-c6e1dd42-95df-4169-a383-67048a9abe06.mp4",
 ];
 
 self.addEventListener("install", (e) => {
