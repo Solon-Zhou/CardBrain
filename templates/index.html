@@ -15,42 +15,42 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
-	<body>
-	  <!-- launch splash (in-app) -->
-	  <div id="launchSplash" class="launch-splash" aria-hidden="true">
-	    <video id="launchSplashVideo" class="launch-splash__video" autoplay muted playsinline preload="auto">
-	      <source src="/static/media/watermarked-c6e1dd42-95df-4169-a383-67048a9abe06.mp4" type="video/mp4">
-	    </video>
-	  </div>
-	  <div id="app-root">
-	    <!-- header -->
-	    <header class="app-header">
-	      <h1 class="logo">🧠 CardBrain</h1>
-	    </header>
+<body>
+  <!-- launch splash (in-app) -->
+  <div id="launchSplash" class="launch-splash" aria-hidden="true">
+    <video id="launchSplashVideo" class="launch-splash__video" autoplay muted playsinline preload="auto">
+      <source src="/static/media/watermarked-c6e1dd42-95df-4169-a383-67048a9abe06.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div id="app-root">
+    <!-- header -->
+    <header class="app-header">
+      <h1 class="logo">🧠 CardBrain</h1>
+    </header>
 
     <!-- main content area (pages render here) -->
     <main id="page-container"></main>
 
-      <!-- bottom tab bar -->
-      <nav class="tab-bar" id="tabBar">
-        <a class="tab-item active" href="#/" data-tab="/">
-          <img class="tab-icon" src="/static/icons/home.png" alt="">
-          <span>首頁</span>
-        </a>
-        <a class="tab-item" href="#/compare" data-tab="/compare">
-          <img class="tab-icon" src="/static/icons/compare.png" alt="">
-          <span>比對</span>
-        </a>
-        <a class="tab-item" href="#/nearby" data-tab="/nearby">
-          <img class="tab-icon" src="/static/icons/bonus.png" alt="">
-          <span>優惠</span>
-        </a>
-        <a class="tab-item" href="#/cards" data-tab="/cards">
-          <img class="tab-icon" src="/static/icons/user.png" alt="">
-          <span>我的</span>
-        </a>
-      </nav>
-    </div>
+    <!-- bottom tab bar -->
+    <nav class="tab-bar" id="tabBar">
+      <a class="tab-item active" href="#/" data-tab="/">
+        <img class="tab-icon" src="/static/icons/home.png" alt="">
+        <span>首頁</span>
+      </a>
+      <a class="tab-item" href="#/compare" data-tab="/compare">
+        <img class="tab-icon" src="/static/icons/compare.png" alt="">
+        <span>比對</span>
+      </a>
+      <a class="tab-item" href="#/nearby" data-tab="/nearby">
+        <img class="tab-icon" src="/static/icons/bonus.png" alt="">
+        <span>優惠</span>
+      </a>
+      <a class="tab-item" href="#/cards" data-tab="/cards">
+        <img class="tab-icon" src="/static/icons/user.png" alt="">
+        <span>我的</span>
+      </a>
+    </nav>
+  </div>
 
   <script src="/static/js/config.js"></script>
   <script src="/static/js/store.js"></script>
@@ -59,15 +59,15 @@
   <script src="/static/js/notify.js"></script>
   <script src="/static/js/pages/home.js"></script>
   <script src="/static/js/pages/cards.js"></script>
-	  <script src="/static/js/pages/nearby.js"></script>
-	  <script src="/static/js/pages/compare.js"></script>
-	  <script src="/static/js/pages/result.js"></script>
-	  <script src="/static/js/launch-splash.js"></script>
-	  <script src="/static/js/app.js"></script>
-	  <script src="/static/js/capacitor-bridge.js"></script>
-	  <script>
-	    if ("serviceWorker" in navigator && !Config.isCapacitor) {
-	      navigator.serviceWorker.register("/static/sw.js");
+  <script src="/static/js/pages/nearby.js"></script>
+  <script src="/static/js/pages/compare.js"></script>
+  <script src="/static/js/pages/result.js"></script>
+  <script src="/static/js/launch-splash.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/capacitor-bridge.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && !Config.isCapacitor) {
+      navigator.serviceWorker.register("/static/sw.js");
     }
   </script>
 </body>
