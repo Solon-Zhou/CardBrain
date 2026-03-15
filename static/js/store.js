@@ -15,7 +15,6 @@ const Store = (() => {
 
   function saveMyCards(ids) {
     localStorage.setItem(KEY, JSON.stringify(ids));
-    _syncToNative(ids);
   }
 
   function toggleCard(cardId) {
@@ -32,12 +31,6 @@ const Store = (() => {
 
   function hasCard(cardId) {
     return getMyCards().includes(cardId);
-  }
-
-  function _syncToNative(ids) {
-    if (typeof CapBridge !== "undefined" && CapBridge.syncCards) {
-      CapBridge.syncCards();
-    }
   }
 
   return { getMyCards, saveMyCards, toggleCard, hasCard };

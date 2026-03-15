@@ -47,15 +47,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>location</string>
-	</array>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>CardBrain 需要背景定位來偵測附近商家，推送優惠通知給您。</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>CardBrain 需要定位來顯示附近商家和推薦信用卡優惠。</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>CardBrain 需要背景定位來偵測附近商家，推送優惠通知給您。</string>
 </dict>
 </plist>
