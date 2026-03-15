@@ -1,5 +1,14 @@
 {
   "appId": "com.cardbrain.app",
   "appName": "CardBrain",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "NearbyNotifier": {
+      "apiBase": "https://jetthai-cardbrain.zeabur.app",
+      "distanceFilter": 50,
+      "notifyRadius": 200,
+      "resetDistance": 300,
+      "resetIntervalMinutes": 30
+    }
+  }
 }

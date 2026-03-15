@@ -194,7 +194,11 @@ NearbyPage.init = (params = {}) => {
 
   let _isDenied = false;
 
-  if (!("geolocation" in navigator)) {
+  if (Config.isCapacitor) {
+    // Capacitor: App 啟動時 CapBridge 已請求過定位權限，直接開始
+    _hidePermissionPrompt();
+    _startGeo();
+  } else if (!("geolocation" in navigator)) {
     permissionEl.querySelector(".nearby-permission-text").textContent = "您的瀏覽器不支援定位功能";
     permissionEl.querySelector(".nearby-permission-btn").style.display = "none";
     _showPermissionPrompt();
