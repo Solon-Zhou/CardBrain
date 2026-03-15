@@ -27,20 +27,6 @@ const CapBridge = (() => {
   const RESET_DISTANCE = 300; // 300m 移動後重置已通知
   const RESET_INTERVAL = 30 * 60 * 1000; // 30 分鐘定期重置
 
-  // ── DEBUG: 測完全部改 false ──
-  const _DEBUG = true;
-  // 測試模式：模擬台北車站座標，讓偏遠地區也能驗證推播
-  const _TEST_MODE = true;
-  const _TEST_LAT = 25.0478;
-  const _TEST_LNG = 121.5170;
-
-  function _dbg(msg) {
-    if (!_DEBUG) return;
-    LocalNotifications.schedule({
-      notifications: [{ id: _notifId++, title: "CB DEBUG", body: msg }],
-    }).catch(() => {});
-  }
-
   /**
    * 初始化背景定位 + 通知
    */
@@ -70,14 +56,14 @@ const CapBridge = (() => {
         await LocalNotifications.requestPermissions();
       }
     } catch (e) {
-      console.warn("[CB] notification permission error:", e);
+      console.warn("[CapBridge] notification permission error:", e);
     }
   }
 
   async function _startBackgroundGeolocation() {
     try {
       if (!BackgroundGeolocation) {
-        _dbg("1 ❌ plugin 不存在，用 fallback");
+        console.warn("[CapBridge] BackgroundGeolocation plugin not available");
         _fallbackForegroundWatch();
         return;
       }
@@ -94,19 +80,19 @@ const CapBridge = (() => {
         // callback: 每次位置更新觸發
         (location, error) => {
           if (error) {
-            _dbg("2 ❌ 定位錯誤: " + (error.code || error.message));
+            if (error.code === "NOT_AUTHORIZED") {
+              console.warn("[CapBridge] location permission denied");
+            }
             return;
           }
           if (location) {
-            _dbg("2 ✅ 收到位置: " + location.latitude.toFixed(4) + ", " + location.longitude.toFixed(4));
             _onLocation(location.latitude, location.longitude);
           }
         }
       );
-      _dbg("1 ✅ watcher 啟動成功");
 
     } catch (e) {
-      _dbg("1 ❌ watcher 啟動失敗: " + e.message);
+      console.warn("[CapBridge] BackgroundGeolocation init error:", e);
       _fallbackForegroundWatch();
     }
   }
@@ -135,22 +121,11 @@ const CapBridge = (() => {
       const params = new URLSearchParams({ lat, lng });
       if (cardIds.length) params.set("card_ids", cardIds.join(","));
 
-      // 測試模式：附加模擬座標讓 API 用台北車站附近查商家
-      if (_TEST_MODE) {
-        params.set("debug_lat", _TEST_LAT);
-        params.set("debug_lng", _TEST_LNG);
-      }
-      const url = `${Config.API_BASE}/api/nearby?${params}`;
-
-      const res = await fetch(url);
-      if (!res.ok) {
-        _dbg("3 ❌ API 失敗: HTTP " + res.status);
-        return;
-      }
+      const res = await fetch(`${Config.API_BASE}/api/nearby?${params}`);
+      if (!res.ok) return;
 
       const data = await res.json();
       const nearby = data.nearby || [];
-      _dbg("3 ✅ API 回傳 " + nearby.length + " 筆");
 
       for (const item of nearby) {
         if (_notified.has(item.merchant_name)) continue;
@@ -171,7 +146,7 @@ const CapBridge = (() => {
         });
       }
     } catch (e) {
-      _dbg("3 ❌ onLocation 錯誤: " + e.message);
+      console.warn("[CapBridge] onLocation error:", e);
     }
   }
 
