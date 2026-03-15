@@ -2,7 +2,8 @@
  * nearby.js — 附近商家地圖頁面
  */
 
-async function NearbyPage() {
+async function NearbyPage(params = {}) {
+  const debugMode = params?.debug === "1" || params?.debug === "true";
   return `
     <div class="nearby-page">
       <div class="page-title">📍 附近商家</div>
@@ -14,15 +15,29 @@ async function NearbyPage() {
           <button class="nearby-permission-btn" id="btnGrantLocation">開啟定位</button>
         </div>
       </div>
+      ${debugMode ? `
+      <div class="nearby-actions" id="nearbyActions">
+        <button class="nearby-action-btn" id="btnDemoLocation" type="button">用台北101示範</button>
+        <button class="nearby-action-btn" id="btnTestNotify" type="button">測試推播</button>
+        <button class="nearby-action-btn" id="btnAskNotify" type="button">開啟通知權限</button>
+      </div>
+      <div class="nearby-debug" id="nearbyDebug">等待定位...</div>
+      ` : ""}
     </div>
   `;
 }
 
-NearbyPage.init = () => {
+NearbyPage.init = (params = {}) => {
   const permissionEl = document.getElementById("nearbyPermission");
   const mapEl = document.getElementById("nearbyMap");
+  const debugMode = params?.debug === "1" || params?.debug === "true";
+  const debugEl = document.getElementById("nearbyDebug");
+  const actionsEl = document.getElementById("nearbyActions");
   let _nearbyMap = null;
   let _mapLayerGroup = null;
+  let _lastRenderTs = null;
+  let _lastLat = null;
+  let _lastLng = null;
 
   const MERCHANT_EMOJIS = {
     "咖啡店": "☕", "超商": "🏪", "超市": "🛒",
@@ -47,8 +62,23 @@ NearbyPage.init = () => {
     mapEl.style.display = "";
   }
 
+  function _updateDebug(info) {
+    if (!debugMode || !debugEl) return;
+    const { userLat, userLng, accuracy, nearby } = info;
+    const ts = new Date().toLocaleTimeString();
+    debugEl.innerHTML = `
+      <div>🕒 ${ts}</div>
+      <div>📍 ${userLat?.toFixed(6)}, ${userLng?.toFixed(6)}${accuracy ? ` (±${Math.round(accuracy)}m)` : ""}</div>
+      <div>🛒 商家數：${nearby?.length || 0}</div>
+      <div>⏱️ 上次渲染：${_lastRenderTs ? ((Date.now() - _lastRenderTs) / 1000).toFixed(1) + "s 前" : "首次"}</div>
+    `;
+  }
+
   function renderNearby(data) {
     const { userLat, userLng, nearby, accuracy } = data;
+    _lastRenderTs = Date.now();
+    _lastLat = userLat;
+    _lastLng = userLng;
 
     _hidePermissionPrompt();
 
@@ -129,6 +159,31 @@ NearbyPage.init = () => {
         Notify.notifyNearby(nearby[0]);
       });
     }
+
+    _updateDebug(data);
+  }
+
+  async function _fetchOnce(lat, lng) {
+    try {
+      const cardIds = Store.getMyCards();
+      const params = new URLSearchParams({ lat, lng });
+      if (cardIds.length) params.set("card_ids", cardIds.join(","));
+      const res = await fetch(`${Config.API_BASE}/api/nearby?${params}`);
+      if (!res.ok) {
+        _updateDebug({ userLat: lat, userLng: lng, accuracy: null, nearby: [] });
+        return;
+      }
+      const data = await res.json();
+      renderNearby({
+        userLat: data.user_lat ?? lat,
+        userLng: data.user_lng ?? lng,
+        nearby: data.nearby || [],
+        accuracy: data.accuracy,
+      });
+    } catch (e) {
+      console.warn("[Nearby] fetch once failed", e);
+      _updateDebug({ userLat: lat, userLng: lng, accuracy: null, nearby: [] });
+    }
   }
 
   function _startGeo() {
@@ -168,6 +223,53 @@ NearbyPage.init = () => {
       _startGeo();
     }
   });
+
+  if (debugMode && actionsEl) {
+    const demoBtn = document.getElementById("btnDemoLocation");
+    const testBtn = document.getElementById("btnTestNotify");
+    const permBtn = document.getElementById("btnAskNotify");
+
+    demoBtn?.addEventListener("click", () => {
+      // 台北 101
+      _fetchOnce(25.033964, 121.564468);
+    });
+
+    testBtn?.addEventListener("click", () => {
+      if (typeof Notify === "undefined") return;
+      Notify.requestPermission().then((perm) => {
+        _updateDebug({
+          userLat: _lastLat || 0,
+          userLng: _lastLng || 0,
+          accuracy: null,
+          nearby: [],
+        });
+        if (perm !== "granted") return;
+        Notify.notifyNearby({
+          merchant_name: "測試商家",
+          category_name: "咖啡店",
+          distance_m: 120,
+          lat: 25.033964,
+          lng: 121.564468,
+          top_card: {
+            bank_name: "國泰世華",
+            card_name: "CUBE 卡",
+            reward_rate: 3.3,
+            reward_type: "points",
+          },
+        });
+      });
+    });
+
+    permBtn?.addEventListener("click", () => {
+      if (typeof Notify === "undefined") return;
+      Notify.requestPermission().then((perm) => {
+        if (debugEl) {
+          const msg = perm === "granted" ? "通知權限已允許" : `通知權限狀態：${perm}`;
+          debugEl.insertAdjacentHTML("beforeend", `<div>${msg}</div>`);
+        }
+      });
+    });
+  }
 
   // destroy 定義在 init 閉包內，才能存取 _nearbyMap
   NearbyPage.destroy = () => {

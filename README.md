@@ -273,6 +273,17 @@ npx cap build android        # 編譯 APK
 | `DATABASE_URL` | 選用 | Supabase PostgreSQL 連接字串（無則用 SQLite） |
 | `GOOGLE_PLACES_API_KEY` | 選用 | Google Places API（無則 fallback Overpass/OSM） |
 
+## 前端 B 快速指南（地圖 + 推播 + 打包）
+
+- PWA 地圖：`#/nearby` 呼叫 `/api/nearby`，定位每 50m / 60s 節流，移動超過 300m 會清空已通知商家，讓新區域能再次推播。
+- 推播：瀏覽器用 Notification API，Capacitor 由 `capacitor-bridge.js` 觸發 `@capacitor/local-notifications`，點擊通知會跳轉到結果頁並帶商家參數。
+- 背景定位：Capacitor 啟動時自動啟用 `@capacitor-community/background-geolocation`，距離移動 50m 觸發，半徑 200m 內才推播；每 30 分鐘或移動 300m 會重置去重。
+- 打包（Android / iOS）：
+  1) `npm install`
+  2) `bash scripts/build-cap.sh` 產出 `www/`
+  3) `npx cap sync android` 或 `npx cap sync ios`
+  4) Android: `npx cap open android` → Android Studio Run；iOS: `npx cap open ios` → Xcode 設定 Signing 後 Run。
+
 ---
 
 ## 技術棧
